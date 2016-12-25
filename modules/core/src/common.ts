@@ -1,10 +1,6 @@
 export const RESOURCE_METADATA_KEY = 'resource:config';
 export const RESOURCE_ACTIONS_METADATA_KEY = 'resource:action-config';
 
-export function isFunction(value: any): value is Function {
-  return typeof value === 'function';
-}
-
 export enum RequestMethod {
   POST,
   PUT,
@@ -90,4 +86,12 @@ export interface ResourceParamMethod<R> {
 
 export interface ResourceMethod<T, R> {
   (resource: T, params?: any): R;
+}
+
+export abstract class DefaultResource<T, R, L> {
+  get: ResourceParamMethod<R>;
+  list: ResourceParamMethod<L>;
+  create: ResourceMethod<T, R>;
+  update: ResourceMethod<T, R>;
+  delete: ResourceParamMethod<T>;
 }

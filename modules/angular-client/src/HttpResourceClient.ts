@@ -18,7 +18,7 @@ import {
 } from '@resticle/core';
 
 @Injectable()
-export class HttpFetchClient implements ResourceFetchClient {
+export class HttpResourceClient implements ResourceFetchClient {
   constructor(
     @Inject(Http) private http: Http
   ) {}

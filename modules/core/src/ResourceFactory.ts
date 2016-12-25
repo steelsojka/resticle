@@ -1,7 +1,8 @@
 import * as URL from 'url-parse';
 
+import { isFunction } from './utils';
+
 import { 
-  isFunction,
   ResourceFetchClient, 
   ResponseContentType,
   Type,
@@ -17,20 +18,36 @@ import {
 } from './common';
 
 export class ResourceFactory {
+  private cache = new Map<Type<any>, any>();
+  
   constructor(private client: ResourceFetchClient) {}
 
-  create<T>(ResourceCtor: Type<T>): T {
+  get<T>(ResourceCtor: Type<T>): T {
+    if (this.cache.has(ResourceCtor)) {
+      return this.cache.get(ResourceCtor) as T;
+    }
+    
     const config: ResourceConfig|undefined = Reflect.getOwnMetadata(RESOURCE_METADATA_KEY, ResourceCtor);  
 
     if (!config) {
       throw new Error('Resource given is not a confiugured resource');
     }
 
-    const resource = new ResourceCtor(this.client);
+    const resource = new ResourceCtor(this.client, this);
 
     if (config.defaults !== false) {
       this.createDefaultInterface(resource, config);
     }
+
+    const actions: ResourceActionMetadata[]|undefined = Reflect.getOwnMetadata(RESOURCE_ACTIONS_METADATA_KEY, ResourceCtor);
+
+    if (actions) {
+      for (const action of actions) {
+        this.createAction<T>(resource, action.key, action.config, config);
+      }
+    }
+
+    this.cache.set(ResourceCtor, resource);
 
     return resource;
   }
@@ -113,7 +130,6 @@ export class ResourceFactory {
       url.set('pathname', populatedPath);
 
       const queryString = factory.serializeQuery(query);
-      
       const sendRequest = factory.resolveClientMethod(config.method);
       const req: ResourceRequest<any> = {
         url,

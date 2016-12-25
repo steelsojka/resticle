@@ -1,5 +1,5 @@
 import { ResourceFactory } from '../src/ResourceFactory';
-import { TestResource } from '../src/TestResource';
+import { TestResource } from './TestResource';
 
 const resourceFactory = new ResourceFactory({
   get(req) {
@@ -16,6 +16,6 @@ const resourceFactory = new ResourceFactory({
   }
 });
 
-const resource = resourceFactory.create(TestResource);
+const resource = resourceFactory.get(TestResource);
 
 resource.update({ group: 546, id: 123 }, { include: ['name', 'face'], pizza: false });
