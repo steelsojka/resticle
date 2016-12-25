@@ -1,0 +1,26 @@
+{
+  "name": "@resticle/core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "typings": "build/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha --opts mocha.opts"
+  },
+  "author": "Steven Sojka",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/reflect-metadata": "0.0.5",
+    "mocha": "^3.2.0",
+    "reflect-metadata": "^0.1.9",
+    "ts-node": "^1.7.2",
+    "typescript": "^2.1.4"
+  },
+  "peerDependencies": {
+    "reflect-metadata": "^0.1.9"
+  },
+  "dependencies": {
+    "url-parse": "^1.1.7"
+  }
+}

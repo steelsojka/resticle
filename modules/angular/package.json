@@ -1,0 +1,28 @@
+{
+  "name": "@resticle/angular",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Steven Sojka",
+  "license": "MIT",
+  "peerDependencies": {
+    "@resticle/core": "^1.0.0",
+    "@angular/common": "^2.4.1",
+    "@angular/core": "^2.4.1",
+    "@angular/http": "^2.4.1",
+    "rxjs": "^5.0.2"
+  },
+  "devDependencies": {
+    "@angular/common": "^2.4.1",
+    "@angular/core": "^2.4.1",
+    "@angular/http": "^2.4.1",
+    "@angular/platform-browser": "^2.4.1",
+    "@resticle/core": "^1.0.0",
+    "reflect-metadata": "^0.1.9",
+    "rxjs": "^5.0.2",
+    "zone.js": "^0.7.4"
+  }
+}
