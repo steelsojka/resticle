@@ -18,4 +18,6 @@ const resourceFactory = new ResourceFactory({
 
 const resource = resourceFactory.get(TestResource);
 
-resource.update({ group: 546, id: 123 }, { include: ['name', 'face'], pizza: false });
+resource.charge({ group: 546, id: 123 }, { amount: 59.99 });
+resource.refund({ group: 546, id: 123 }, { amount: 67.99 });
+resource.get({ id: 123 });

@@ -38,6 +38,11 @@ export interface ResourceActionConfig {
   params?: {[key: string]: any};
 }
 
+export interface TargetedResourceActionConfig {
+  path?: string;  
+  params?: {[key: string]: any};
+}
+
 export interface ResourceConfig {
   path: string;
   defaults?: boolean;
@@ -70,6 +75,10 @@ export interface ResourceRequestOptions {
   responseType?: ResponseContentType;
 }
 
+export interface ResourceParams {
+  [key: string]: any;
+}
+
 export interface ResourceFetchClient {
   serializeQuery?: (query: {[key: string]: any}) => string;
   encodeParam?: (value: string) => string;
@@ -81,17 +90,29 @@ export interface ResourceFetchClient {
 }
 
 export interface ResourceParamMethod<R> {
-  (params?: any): R;
+  (params?: ResourceParams, options?: ResourceRequestOptions): R;
 }
 
 export interface ResourceMethod<T, R> {
-  (resource: T, params?: any): R;
+  (resource: T, params?: ResourceParams, options?: ResourceRequestOptions): R;
 }
 
-export abstract class DefaultResource<T, R, L> {
+export abstract class DefaultResource<T, R, S> {
   get: ResourceParamMethod<R>;
-  list: ResourceParamMethod<L>;
+  list: ResourceParamMethod<S>;
   create: ResourceMethod<T, R>;
   update: ResourceMethod<T, R>;
   delete: ResourceParamMethod<T>;
+}
+
+export interface TargetedResourceActionDecorator {
+  (config?: TargetedResourceActionConfig): PropertyDecorator;
+}
+
+export interface RootResourceActionDecorator {
+  (config: ResourceActionConfig): PropertyDecorator;
+  Put: TargetedResourceActionDecorator;
+  Post: TargetedResourceActionDecorator;
+  Get: TargetedResourceActionDecorator;
+  Delete: TargetedResourceActionDecorator;
 }

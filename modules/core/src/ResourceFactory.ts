@@ -39,7 +39,7 @@ export class ResourceFactory {
       this.createDefaultInterface(resource, config);
     }
 
-    const actions: ResourceActionMetadata[]|undefined = Reflect.getOwnMetadata(RESOURCE_ACTIONS_METADATA_KEY, ResourceCtor);
+    const actions: ResourceActionMetadata[]|undefined = Reflect.getOwnMetadata(RESOURCE_ACTIONS_METADATA_KEY, ResourceCtor.prototype);
 
     if (actions) {
       for (const action of actions) {
@@ -91,7 +91,7 @@ export class ResourceFactory {
       value: action
     });
 
-    function action(payloadOrParams: any, maybeParams?: any, options: any = {}): any {
+    function action(payloadOrParams: any, maybeParams: any = {}, options: any = {}): any {
       let params, payload = null;
       let url = new URL(parsedURL.href);
       
@@ -196,6 +196,8 @@ export class ResourceFactory {
 
       segments.push(...actionSegments);
     }
+
+    parsedURL.set('pathname', segments.join('/'));
 
     return parsedURL;
   }
