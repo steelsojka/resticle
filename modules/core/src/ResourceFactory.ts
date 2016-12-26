@@ -18,7 +18,8 @@ import {
 } from './common';
 
 export class ResourceFactory {
-  private cache = new Map<Type<any>, any>();
+  protected cache = new Map<Type<any>, any>();
+  protected pathParamMatcher = /\/:[a-zA-Z0-9]*/g;
   
   constructor(private client: ResourceFetchClient) {}
 
@@ -115,17 +116,22 @@ export class ResourceFactory {
         if (pathMatcher.test(url.pathname)) {
           let value;
           
-          if (typeof param === 'string' && param.charAt(0) === '@' && payload) {
-            value = payload[param.slice(1)];
+          if (typeof param === 'string' && param.charAt(0) === '@') {
+            if (payload) {
+              value = payload[param.slice(1)];
+            }
           } else {
             value = param;
           }
-          
-          populatedPath = populatedPath.replace(pathMatcher, `/${factory.encodeParam(value)}`);
+
+          populatedPath = populatedPath.replace(pathMatcher, value ? `/${factory.encodeParam(value)}` : '');
         } else {
           query[paramKey] = param;
         }
       }
+
+      // Replace any path params that we didn't populate.
+      populatedPath = populatedPath.replace(factory.pathParamMatcher, '');
 
       url.set('pathname', populatedPath);
 

@@ -10,7 +10,7 @@ import {
 export interface Model {}
 
 @Resource({
-  path: '/test/:id',
+  path: '/test/:id/:blorg',
   defaults: false,
   params: {
     id: '@id'
@@ -30,4 +30,7 @@ export class TestResource {
   
   @ResourceAction.Get()
   get: ResourceParamMethod<Promise<Model>>
+
+  @ResourceAction.Get()
+  list: ResourceParamMethod<Promise<Model>>
 }

@@ -5,7 +5,8 @@
   "main": "build/index.js",
   "typings": "build/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "prebuild": "rm -rf build",
+    "build": "tsc -p tsconfig.build.json",
     "test": "mocha --opts mocha.opts"
   },
   "author": "Steven Sojka",

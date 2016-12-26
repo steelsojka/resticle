@@ -5,12 +5,10 @@
         "noImplicitAny": false,
         "sourceMap": true,
         "experimentalDecorators": true,
-        "outDir": "./build" ,
-        "moduleResolution": "node",
-        "declaration": true,
-        "declarationDir": "./build"
+        "moduleResolution": "node"
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "test/**/*.spec.ts"
     ]
 }
