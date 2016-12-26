@@ -1,2 +1,5 @@
 src
 test
+mocha.opts
+tsconfig.json
+tsconfig.build.json
