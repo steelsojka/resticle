@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "moduleResolution": "node",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es6",
+            "scripthost"
+        ]
+    },
+    "include": [
+        "src/**/*",
+        "test/**/*.spec.ts"
+    ]
+}
