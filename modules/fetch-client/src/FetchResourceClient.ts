@@ -22,11 +22,11 @@ export class FetchResourceClient implements ResourceFetchClient {
     return this.request(req);
   }
 
-  mapValue<T>(reqResult: Promise<T>, callback: (val: any) => T): Promise<T> {
-    return reqResult.then(val => callback(val));
+  subscribe<T>(res: Promise<T>, callback: (val: any) => T): Promise<T> {
+    return res.then(val => callback(val));
   }
 
-  private request<T>(req: ResourceRequest<T>): Promise<T> {
+  protected request<T>(req: ResourceRequest<T>): Promise<T> {
     return fetch(req.path, this.convertRequest(req))
       .then(res => <Promise<T>>this.extract(res, req));
   }

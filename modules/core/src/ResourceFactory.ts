@@ -150,7 +150,7 @@ export class ResourceFactory {
         action: clone(config)
       };
 
-      return factory.client.mapValue(sendRequest(req), res => {
+      return factory.client.subscribe(sendRequest(req), res => {
         return factory.processTransform(res, resource, config);
       });
     }

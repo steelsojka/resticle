@@ -14,7 +14,7 @@ const resourceFactory = new ResourceFactory({
   delete() {
     return Promise.resolve({});
   },
-  mapValue(reqResult: Promise<any>, callback: (val: any) => any): Promise<any> {
+  subscribe(reqResult: Promise<any>, callback: (val: any) => any): Promise<any> {
     return reqResult.then(val => callback(val));
   }
 });

@@ -27,7 +27,7 @@ export class TestResource implements ResourceTransform<Model> {
   charge: ResourceMethod<Model, Promise<Model>>
 
   @ResourceAction.Put({
-    path: '/refund'  
+    path: '/refund'
   })
   refund: ResourceMethod<Model, Promise<Model>>
   
