@@ -53,6 +53,10 @@ export class HttpResourceClient implements ResourceFetchClient {
     return ''; // Allow Angular to serialize the query.
   }
 
+  mapValue<T>(reqResult: Observable<T>, callback: (val: any) => T): Observable<T> {
+    return reqResult.map(res => callback(res));
+  }
+
   private request<T>(req: ResourceRequest<T>): Observable<T> {
     return new Observable<T>((observer: Subscriber<T>) => {
       let promise = Promise.resolve(req); 

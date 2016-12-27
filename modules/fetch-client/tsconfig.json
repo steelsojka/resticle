@@ -7,10 +7,10 @@
         "experimentalDecorators": true,
         "moduleResolution": "node",
         "lib": [
+            "dom",
             "dom.iterable",
-            "es2015",
-            "scripthost",
-            "dom"
+            "es6",
+            "scripthost"
         ]
     },
     "include": [

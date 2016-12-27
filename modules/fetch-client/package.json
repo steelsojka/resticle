@@ -1,0 +1,22 @@
+{
+  "name": "@resticle/fetch-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "typings": "build/index.d.ts",
+  "scripts": {
+    "prebuild": "rm -rf build",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Steven Sojka",
+  "license": "MIT",
+  "peerDependencies": {
+    "@resticle/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@resticle/core": "^1.0.0",
+    "@types/whatwg-fetch": "0.0.33",
+    "reflect-metadata": "^0.1.9"
+  }
+}

@@ -9,6 +9,8 @@ import {
   RootResourceActionDecorator
 } from './common';
 
+import { isBoolean } from './utils';
+
 const methodToType = {
   Delete: RequestMethod.DELETE,
   Get: RequestMethod.GET,
@@ -20,7 +22,10 @@ export const ResourceAction = <RootResourceActionDecorator>function ResourceActi
   return function resourceActionDecorator(target: typeof Resource, key: string): void {
     let actions = getOrCreate<ResourceActionMetadata[]>(RESOURCE_ACTIONS_METADATA_KEY, [], target);
 
-    actions.push({ key, config });
+    actions.push({
+      key, 
+      config: setActionDefaults(config)
+    });
 
     Reflect.defineMetadata(RESOURCE_ACTIONS_METADATA_KEY, actions, target);
   }
@@ -30,6 +35,16 @@ export function Resource(config: ResourceConfig): ClassDecorator {
   return function resourceDecorator(target: typeof Resource): void {
     Reflect.defineMetadata(RESOURCE_METADATA_KEY, config, target);
   }
+}
+
+function setActionDefaults(config: ResourceActionConfig): ResourceActionConfig {
+  if (!isBoolean(config.transform)) {
+    config.transform = config.method !== RequestMethod.DELETE;
+  }
+
+  config.isArray = Boolean(config.isArray);
+
+  return config;
 }
 
 function getOrCreate<T>(key: string, value: T, target: any): T {

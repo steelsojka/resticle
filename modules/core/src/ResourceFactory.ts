@@ -1,6 +1,6 @@
 import * as URL from 'url-parse';
 
-import { isFunction } from './utils';
+import { isFunction, clone } from './utils';
 
 import { 
   ResourceFetchClient, 
@@ -71,7 +71,8 @@ export class ResourceFactory {
     }, config);
 
     this.createAction(resource, 'list', {
-      method: RequestMethod.GET
+      method: RequestMethod.GET,
+      isArray: true
     }, config);
   }
 
@@ -145,11 +146,28 @@ export class ResourceFactory {
         headers: options.headers || {},
         method: config.method,
         responseType: options.hasOwnProperty('responseType') ? options.responseType : ResponseContentType.JSON,
-        path: queryString ? `${url.href}?${queryString}` : url.href
+        path: queryString ? `${url.href}?${queryString}` : url.href,
+        action: clone(config)
       };
 
-      return sendRequest(req);
+      return factory.client.mapValue(sendRequest(req), res => {
+        return factory.processTransform(res, resource, config);
+      });
     }
+  }
+
+  protected processTransform(res: any, resource: any, actionConfig: ResourceActionConfig): any {
+    const hasTransform = actionConfig.transform && isFunction(resource.transform);
+    
+    if (actionConfig.isArray) {
+      if (!Array.isArray(res)) {
+        throw new Error('Expected array from action');
+      }
+
+      return hasTransform ? res.map(v => resource.transform(v)) : res;
+    }
+
+    return hasTransform ? resource.transform(res) : res;
   }
 
   protected encodeParam(value: any): string {

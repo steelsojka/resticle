@@ -4,19 +4,22 @@ import {
   ResourceMethod,
   ResourceParamMethod,
   ResourceParams,
+  ResourceTransform,
   DefaultResource
 } from '../src/common';
 
-export interface Model {}
+export class Model {
+  constructor(res: any) {}
+}
 
 @Resource({
-  path: '/test/:id/:blorg',
+  path: '/test/:id',
   defaults: false,
   params: {
     id: '@id'
   }
 })
-export class TestResource {
+export class TestResource implements ResourceTransform<Model> {
   @ResourceAction({
     method: RequestMethod.PUT,
     path: '/charge'
@@ -31,6 +34,12 @@ export class TestResource {
   @ResourceAction.Get()
   get: ResourceParamMethod<Promise<Model>>
 
-  @ResourceAction.Get()
-  list: ResourceParamMethod<Promise<Model>>
+  @ResourceAction.Get({
+    isArray: true
+  })
+  list: ResourceParamMethod<Promise<Model[]>>
+
+  transform(res: any): Model {
+    return new Model(res);
+  }
 }

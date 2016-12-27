@@ -3,22 +3,30 @@ import { TestResource } from './TestResource';
 
 const resourceFactory = new ResourceFactory({
   get(req) {
-    console.log(req);
+    return req.action.isArray ? Promise.resolve([{}, {}]) : Promise.resolve({});
   },
   post(req) {
-    console.log(req);
+    return Promise.resolve({});
   },
   put(req) {
-    console.log(req);
+    return Promise.resolve({});
   },
   delete() {
-    
+    return Promise.resolve({});
+  },
+  mapValue(reqResult: Promise<any>, callback: (val: any) => any): Promise<any> {
+    return reqResult.then(val => callback(val));
   }
 });
 
-const resource = resourceFactory.get(TestResource);
+describe('test', () => {
+  it('should do something', async () => {
+    const resource = resourceFactory.get(TestResource);
 
-resource.charge({ group: 546, id: 123 }, { amount: 59.99 });
-// resource.refund({ group: 546, id: 123 }, { amount: 67.99 });
-// resource.get({ id: 123 });
-resource.list();
+    console.log(await resource.charge({ group: 546, id: 123 }, { amount: 59.99 }));
+    
+    // resource.refund({ group: 546, id: 123 }, { amount: 67.99 });
+    // resource.get({ id: 123 });
+    console.log(await resource.list());
+  });  
+});

@@ -32,15 +32,15 @@ export interface ParsedURL {
   origin: string;
 }
 
-export interface ResourceActionConfig {
-  method: RequestMethod;
+export interface TargetedResourceActionConfig {
   path?: string;  
+  isArray?: boolean;
+  transform?: boolean;
   params?: {[key: string]: any};
 }
 
-export interface TargetedResourceActionConfig {
-  path?: string;  
-  params?: {[key: string]: any};
+export interface ResourceActionConfig extends TargetedResourceActionConfig {
+  method: RequestMethod;
 }
 
 export interface ResourceConfig {
@@ -67,6 +67,7 @@ export interface ResourceRequest<T> {
   withCredentials: boolean;
   responseType: ResponseContentType;
   body: T;
+  action: ResourceActionConfig;
 }
 
 export interface ResourceRequestOptions {
@@ -87,6 +88,7 @@ export interface ResourceFetchClient {
   post(req: ResourceRequest<any>): any;
   delete(req: ResourceRequest<any>): any;
   put(req: ResourceRequest<any>): any;
+  mapValue(reqResult: any, callback: (value: any) => any): any;
 }
 
 export interface ResourceParamMethod<R> {
@@ -103,6 +105,10 @@ export abstract class DefaultResource<T, R, S> {
   create: ResourceMethod<T, R>;
   update: ResourceMethod<T, R>;
   delete: ResourceParamMethod<T>;
+}
+
+export interface ResourceTransform<T> {
+  transform(res: any): T;
 }
 
 export interface TargetedResourceActionDecorator {
