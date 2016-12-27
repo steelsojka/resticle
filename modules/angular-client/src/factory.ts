@@ -1,4 +1,4 @@
-import { ResourceFactory } from '@resticle/core';
+import { ResourceFactory } from 'resticle';
 
 import { HttpResourceClient } from './HttpResourceClient';
 

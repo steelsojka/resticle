@@ -3,7 +3,7 @@ import {
   ResourceFetchClient, 
   ResourceRequest, 
   ResponseContentType
-} from '@resticle/core';
+} from 'resticle';
 
 export class FetchResourceClient implements ResourceFetchClient {
   get<T>(req: ResourceRequest<T>): Promise<T> {

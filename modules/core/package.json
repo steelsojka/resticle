@@ -1,5 +1,5 @@
 {
-  "name": "@resticle/core",
+  "name": "resticle",
   "version": "1.0.0",
   "description": "",
   "main": "build/index.js",

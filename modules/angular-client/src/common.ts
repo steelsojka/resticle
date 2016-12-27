@@ -1,5 +1,5 @@
 import { OpaqueToken } from '@angular/core';
-import { ResourceRequest } from '@resticle/core';
+import { ResourceRequest } from 'resticle';
 
 export const HTTP_REQUEST_INTERCEPTORS = new OpaqueToken('HttpRequestInterceptors');
 export const HTTP_RESPONSE_INTERCEPTORS = new OpaqueToken('HttpRequestInterceptors');

@@ -16,7 +16,7 @@ import {
   ResourceFetchClient, 
   ResourceRequest, 
   ResponseContentType as ResticleResponseContentType 
-} from '@resticle/core';
+} from 'resticle';
 
 import {
   HTTP_REQUEST_INTERCEPTORS,
