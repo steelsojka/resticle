@@ -2,9 +2,9 @@ import { Resource, Action, Put, Post, Get } from '../src/decorators';
 import { 
   DynamicResourceFactory,
   RequestMethod, 
-  ResourceMethod,
-  ResourceParamMethod,
-  ResourceParams,
+  ActionDataMethod,
+  ActionMethod,
+  RequestParams,
   ResourceTransform,
   ResourceFetchClient
 } from '../src/common';
@@ -24,7 +24,7 @@ export class TestResource implements ResourceTransform<Model> {
     method: RequestMethod.PUT,
     path: '/charge'
   })
-  charge: ResourceMethod<Model, Promise<Model>>
+  charge: ActionDataMethod<Model, Promise<Model>>
 
   @Put({
     path: '/refund/:amount',
@@ -32,7 +32,7 @@ export class TestResource implements ResourceTransform<Model> {
       amount: 123      
     }
   })
-  putWithParam: ResourceMethod<Model, Promise<Model>>
+  putWithParam: ActionDataMethod<Model, Promise<Model>>
 
   @Post({
     path: '/:name/post',
@@ -40,35 +40,35 @@ export class TestResource implements ResourceTransform<Model> {
       name: '@name'
     }
   })
-  postWithParam: ResourceMethod<Model, Promise<Model>>
+  postWithParam: ActionDataMethod<Model, Promise<Model>>
   
   @Get()
-  get: ResourceParamMethod<Promise<Model>>
+  get: ActionMethod<Promise<Model>>
 
   @Get({
     isArray: true
   })
-  list: ResourceParamMethod<Promise<Model[]>>
+  list: ActionMethod<Promise<Model[]>>
 
   @Get({
     params: {
       test: true
     }
   })
-  prepopulatedSearch: ResourceParamMethod<Promise<Model>>;
+  prepopulatedSearch: ActionMethod<Promise<Model>>;
 
   @Get()
-  getWithTransform: ResourceParamMethod<Promise<Model>>;
+  getWithTransform: ActionMethod<Promise<Model>>;
 
   @Get({
     transform: false
   })
-  getWithoutTransform: ResourceParamMethod<Promise<Model>>;
+  getWithoutTransform: ActionMethod<Promise<Model>>;
   
   @Get({
     isArray: true
   })
-  getWithArrayTransform: ResourceParamMethod<Promise<Model[]>>;
+  getWithArrayTransform: ActionMethod<Promise<Model[]>>;
 
   constructor(client: ResourceFetchClient, factory: DynamicResourceFactory<TestResource>) {
     factory.createAction(this, 'blorg', {

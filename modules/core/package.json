@@ -1,7 +1,7 @@
 {
   "name": "resticle",
   "version": "1.0.0",
-  "description": "",
+  "description": "A REST resource library for managing RESTful resources",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
   "scripts": {
@@ -11,6 +11,15 @@
   },
   "author": "Steven Sojka",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/steelsojka/resticle.git"
+  },
+  "keywords": [
+    "REST",
+    "resource",
+    "AJAX"
+  ],
   "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/mocha": "^2.2.35",

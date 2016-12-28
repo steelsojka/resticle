@@ -8,7 +8,7 @@ import {
   Type,
   ParsedURL,
   ResourceRequest,
-  ResourceRequestOptions,
+  RequestOptions,
   RESOURCE_METADATA_KEY,
   RESOURCE_ACTIONS_METADATA_KEY,
   ResourceActionMetadata,

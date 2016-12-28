@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { ResourceFactory } from '../src/ResourceFactory';
+import { ResourceFactory, ResponseContentType } from '../src';
 import { TestResource, Model } from './TestResource';
 import { TestResourceClient } from '../../test-client/src';
 
@@ -119,5 +119,27 @@ describe('resticle', () => {
       expect(result).not.to.be.an.instanceOf(Model);
       expect(result).to.equal(data);
     });    
+  });
+
+  describe('request options', () => {
+    it('should use headers', async () => {
+      resource.get({ id: 123 }, {
+        withCredentials: true, 
+        headers: {
+          'User-Id': 'blorg',
+          'auth': 1234
+        }
+      });
+      
+      await client.flush();
+
+      client.expectGET({
+        withCredentials: true,
+        headers: {
+          'User-Id': 'blorg',
+          'auth': 1234
+        }
+      });
+    });  
   });
 });

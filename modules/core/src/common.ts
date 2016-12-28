@@ -70,7 +70,7 @@ export interface ResourceConfig {
    * A map of params to pre-populate with or to instruct the action to grab from the
    * request body.
    */
-  params?: ResourceParams;
+  params?: RequestParams;
 }
 
 export interface ResourceActionMetadata {
@@ -123,7 +123,7 @@ export interface ResourceRequest<T> {
   action: ResourceActionConfig;
 }
 
-export interface ResourceRequestOptions {
+export interface RequestOptions {
   /**
    * A key/value pair of header properties.
    */
@@ -143,7 +143,7 @@ export interface ResourceRequestOptions {
  * A map of params to pre-populate with or to instruct the action to grab from the
  * request body.
  */
-export interface ResourceParams {
+export interface RequestParams {
   [key: string]: any;
 }
 
@@ -220,17 +220,17 @@ export interface ResourceFetchClient {
  * An interface for an action method that only accepts params and request options.
  * @template R The return type of the action.
  */
-export interface ResourceParamMethod<R> {
-  (params?: ResourceParams, options?: ResourceRequestOptions): R;
+export interface ActionMethod<R> {
+  (params?: RequestParams, options?: RequestOptions): R;
 }
 
 /**
  * An interface for an action method that accepts a body, params and request options.
  * @template T The model value type.
- * @template R The return type of the action.
+ * @template R The returncommon type of the action.
  */
-export interface ResourceMethod<T, R> {
-  (resource: T, params?: ResourceParams, options?: ResourceRequestOptions): R;
+export interface ActionDataMethod<T, R> {
+  (resource: T, params?: RequestParams, options?: RequestOptions): R;
 }
 
 /**
