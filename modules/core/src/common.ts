@@ -67,15 +67,6 @@ export interface ResourceConfig {
    */
   path: string;
   /**
-   * Whether to generate a default REST interface. This includes methods:
-   * - get
-   * - delete
-   * - list
-   * - create
-   * - update
-   */
-  defaults?: boolean;
-  /**
    * A map of params to pre-populate with or to instruct the action to grab from the
    * request body.
    */
@@ -242,14 +233,6 @@ export interface ResourceMethod<T, R> {
   (resource: T, params?: ResourceParams, options?: ResourceRequestOptions): R;
 }
 
-export abstract class DefaultResource<T, R, S> {
-  get: ResourceParamMethod<R>;
-  list: ResourceParamMethod<S>;
-  create: ResourceMethod<T, R>;
-  update: ResourceMethod<T, R>;
-  delete: ResourceParamMethod<T>;
-}
-
 /**
  * An interface for a resource that has a transformer for each item.
  * @template T The model value type.
@@ -269,26 +252,27 @@ export interface TargetedResourceActionDecorator {
   (config?: TargetedResourceActionConfig): PropertyDecorator;
 }
 
-export interface RootResourceActionDecorator {
-  (config: ResourceActionConfig): PropertyDecorator;
+/**
+ * An interface given to the resource when instantiated used
+ * to dynamically create actions.
+ */
+export interface DynamicResourceFactory<T> {
+  /**
+   * Creates an action method. This is the same as annotating a method
+   * except it is bound to the parent resource config.
+   * @param {T} resource The resource. In most use cases this will be `this`.
+   * @param {string} key The name of the action method being created.
+   * @param {ResourceActionConfig} config The action configuration.
+   */
+  createAction(resource: T, key: string, config: ResourceActionConfig): void;
+}
 
+/**
+ * Options used for configuraing the resource factory.
+ */
+export interface FactoryOptions {
   /**
-   * An action prebound to the `PUT` method.
+   * The root path that will be prepended onto all paths.
    */
-  Put: TargetedResourceActionDecorator;
-  
-  /**
-   * An action prebound to the `POST` method.
-   */
-  Post: TargetedResourceActionDecorator;
-  
-  /**
-   * An action prebound to the `GET` method.
-   */
-  Get: TargetedResourceActionDecorator;
-
-  /**
-   * An action prebound to the `DELETE` method.
-   */
-  Delete: TargetedResourceActionDecorator;
+  rootPath?: string;
 }

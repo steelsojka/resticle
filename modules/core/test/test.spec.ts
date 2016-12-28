@@ -1,32 +1,70 @@
+import { expect } from 'chai';
+
 import { ResourceFactory } from '../src/ResourceFactory';
 import { TestResource } from './TestResource';
+import { TestResourceClient } from '../../test-client/src';
 
-const resourceFactory = new ResourceFactory({
-  get(req) {
-    return req.action.isArray ? Promise.resolve([{}, {}]) : Promise.resolve({});
-  },
-  post(req) {
-    return Promise.resolve({});
-  },
-  put(req) {
-    return Promise.resolve({});
-  },
-  delete() {
-    return Promise.resolve({});
-  },
-  subscribe(reqResult: Promise<any>, callback: (val: any) => any): Promise<any> {
-    return reqResult.then(val => callback(val));
-  }
+const client = new TestResourceClient();
+const resourceFactory = new ResourceFactory(client, {
+  rootPath: 'http://myspace.com/rest'
 });
 
-describe('test', () => {
-  it('should do something', async () => {
-    const resource = resourceFactory.get(TestResource);
+describe('resticle', () => {
+  let resource: TestResource;
+  
+  beforeEach(() => {
+    resource = resourceFactory.get(TestResource);
+  });
 
-    console.log(await resource.charge({ group: 546, id: 123 }, { amount: 59.99 }));
+  afterEach(() => {
+    client.verifyNoOutstandingRequests();
+    client.reset();
+  });
+  
+  describe('path population', () => {
+    it('should populate the path the id', async () => {
+      resource.get({ id: 123 });
+      await client.flush();
+      
+      client.expectGET({
+        path: 'http://myspace.com/rest/test/123'
+      });
+    });    
     
-    // resource.refund({ group: 546, id: 123 }, { amount: 67.99 });
-    // resource.get({ id: 123 });
-    console.log(await resource.list());
-  });  
+    it('should omit the path id', async () => {
+      resource.list();
+      await client.flush();
+      
+      client.expectGET({
+        path: 'http://myspace.com/rest/test'
+      });
+    });    
+
+    it('should add on query params', async () => {
+      resource.list({ blorg: true, amount: 123 });
+      await client.flush();
+      
+      client.expectGET({
+        path: 'http://myspace.com/rest/test?blorg=true&amount=123'
+      });
+    });    
+
+    it('should populate multiple path params', async () => {
+      resource.postWithParam({ id: 123, name: 'Steven' });
+      await client.flush();
+      
+      client.expectPOST({
+        path: 'http://myspace.com/rest/test/123/Steven/post'
+      });
+    });    
+
+    it('should omit multiple path params', async () => {
+      resource.postWithParam({ name: 'Steven' });
+      await client.flush();
+      
+      client.expectPOST({
+        path: 'http://myspace.com/rest/test/undefined/Steven/post'
+      });
+    });    
+  });
 });

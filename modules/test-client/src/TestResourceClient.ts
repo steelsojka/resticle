@@ -59,7 +59,7 @@ export class TestResourceClient implements ResourceFetchClient {
     return res.then(val => callback(val));
   }
 
-  step(value: any): Promise<any> {
+  step(value?: any): Promise<any> {
     const req = this.pendingRequests.shift();
     
     if (!req) {
@@ -71,44 +71,57 @@ export class TestResourceClient implements ResourceFetchClient {
     return req.deferred.promise;
   }
 
-  expect(method: RequestMethod, params: ExpectParams): void {
+  expect(method: RequestMethod, params: ExpectParams = {}): void {
+    const matchingRequests = [];
+    let allErrors = [];
+    
     for (const { request, value:val } of this.completedRequests) {
       if (request.method === method) {
-        let matches = true;
+        const errors = [];
         
         for (const key of Object.keys(params)) {
           switch (key) {
             case 'headers':
-              matches = this.assertObject(request.headers, params.headers);
+              this.assertObject(request.headers, params.headers, errors);
               break;
             case 'params':
-              matches = this.assertObject(request.search, params.search);
+              this.assertObject(request.search, params.search, errors);
+              break;
+            case 'search':
+              this.assertObject(request.search, params.search, errors);
               break;
             case 'path':
-              matches = this.assertValue(request.path, params.path);
+              this.assertValue(request.path, params.path, errors);
               break;
             case 'withCredentials':
-              matches = this.assertValue(request.withCredentials, params.withCredentials);
+              this.assertValue(request.withCredentials, params.withCredentials, errors);
               break;
             case 'body':
-              matches = this.assertValue(request.body, params.body);
+              this.assertValue(request.body, params.body, errors);
               break;
           }
         }
 
-        if (matches) {
-          return;
+        if (!errors.length) {
+          matchingRequests.push(request);
+        } else {
+          allErrors = [...allErrors, ...errors];
         }
       }
     }
 
-    throw new Error(`Expected request method ${method} with ${params}`);
+    if (!matchingRequests.length) {
+      if (allErrors.length) {
+        throw new Error(allErrors[0]);
+      } else {
+        throw new Error(`Expected '${this.methodToString(method)}' but none was made.`);
+      }
+    }
   }
 
   async flush(): Promise<any> {
-    for (const req of this.pendingRequests) {
-      req.deferred.resolve();
-      await req.deferred.promise;
+    for (const req of [...this.pendingRequests]) {
+      await this.step();
     }
   }
 
@@ -123,20 +136,34 @@ export class TestResourceClient implements ResourceFetchClient {
     this.pendingRequests = [];
     this.resolvedRequests = [];
     this.rejectedRequests = [];
+    this.completedRequests = [];
+  }
+  
+  protected methodToString(method: RequestMethod): string {
+    switch (method) {
+      case RequestMethod.GET: return 'GET';
+      case RequestMethod.POST: return 'POST';
+      case RequestMethod.DELETE: return 'DELETE';
+      case RequestMethod.PUT: return 'PUT';
+      default:
+        return '';
+    }
   }
 
-  protected assertValue(actual: any, expected: any): boolean {
-    return actual === expected;
+  protected assertValue(actual: any, expected: any, errors: string[]): void {
+    if (actual !== expected) {
+      errors.push(`Expected value '${actual}' to equal '${expected}'`);
+    }
   }
 
-  protected assertObject(obj: {[key: string]: any}, expected: {[key: string]: any}): boolean {
+  protected assertObject(obj: {[key: string]: any}, expected: {[key: string]: any}, errors: string[]): void {
     for (const key of Object.keys(expected)) {
       if (obj[key] !== expected[key]) {
-        return false;
+        errors.push(`Expect object ${JSON.stringify(obj, null, '  ')} to equal ${JSON.stringify(expected, null, '  ')}`);
+        
+        return;
       }
     }
-
-    return true;
   }
 
   protected onSuccess(req: MockRequest<any>): void {

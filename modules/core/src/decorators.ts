@@ -1,24 +1,17 @@
 import { 
   TargetedResourceActionConfig,
+  TargetedResourceActionDecorator,
   RESOURCE_ACTIONS_METADATA_KEY,
   RESOURCE_METADATA_KEY,
   ResourceConfig,
   RequestMethod,
   ResourceActionConfig,
-  ResourceActionMetadata,
-  RootResourceActionDecorator
+  ResourceActionMetadata
 } from './common';
 
 import { isBoolean } from './utils';
 
-const methodToType = {
-  Delete: RequestMethod.DELETE,
-  Get: RequestMethod.GET,
-  Post: RequestMethod.POST,
-  Put: RequestMethod.PUT
-};
-
-export const ResourceAction = <RootResourceActionDecorator>function ResourceAction(config: ResourceActionConfig): PropertyDecorator {
+export function Action(config: ResourceActionConfig): PropertyDecorator {
   return function resourceActionDecorator(target: typeof Resource, key: string): void {
     let actions = getOrCreate<ResourceActionMetadata[]>(RESOURCE_ACTIONS_METADATA_KEY, [], target);
 
@@ -53,12 +46,13 @@ function getOrCreate<T>(key: string, value: T, target: any): T {
   return metadata ? metadata : value;
 }
 
-function createShorthandMethodDecorator(type: RequestMethod): (config: ResourceActionConfig) => PropertyDecorator {
+function createShorthandMethodDecorator(type: RequestMethod): TargetedResourceActionDecorator {
   return function(config: TargetedResourceActionConfig = {}): PropertyDecorator {
-    return ResourceAction(Object.assign(config, { method: type }));
+    return Action(Object.assign(config, { method: type }));
   }    
 }
 
-for (const key of Object.keys(methodToType)) {
-  ResourceAction[key] = createShorthandMethodDecorator(methodToType[key]);
-}
+export const Post = createShorthandMethodDecorator(RequestMethod.POST);
+export const Put = createShorthandMethodDecorator(RequestMethod.PUT);
+export const Delete = createShorthandMethodDecorator(RequestMethod.DELETE);
+export const Get = createShorthandMethodDecorator(RequestMethod.GET);

@@ -1,11 +1,12 @@
-import { Resource, ResourceAction } from '../src/decorators';
+import { Resource, Action, Put, Post, Get } from '../src/decorators';
 import { 
+  DynamicResourceFactory,
   RequestMethod, 
   ResourceMethod,
   ResourceParamMethod,
   ResourceParams,
   ResourceTransform,
-  DefaultResource
+  ResourceFetchClient
 } from '../src/common';
 
 export class Model {
@@ -14,30 +15,43 @@ export class Model {
 
 @Resource({
   path: '/test/:id',
-  defaults: false,
   params: {
     id: '@id'
   }
 })
 export class TestResource implements ResourceTransform<Model> {
-  @ResourceAction({
+  @Action({
     method: RequestMethod.PUT,
     path: '/charge'
   })
   charge: ResourceMethod<Model, Promise<Model>>
 
-  @ResourceAction.Put({
+  @Put({
     path: '/refund'
   })
   refund: ResourceMethod<Model, Promise<Model>>
+
+  @Post({
+    path: '/:name/post',
+    params: {
+      name: '@name'
+    }
+  })
+  postWithParam: ResourceMethod<Model, Promise<Model>>
   
-  @ResourceAction.Get()
+  @Get()
   get: ResourceParamMethod<Promise<Model>>
 
-  @ResourceAction.Get({
+  @Get({
     isArray: true
   })
   list: ResourceParamMethod<Promise<Model[]>>
+
+  constructor(client: ResourceFetchClient, factory: DynamicResourceFactory<TestResource>) {
+    factory.createAction(this, 'blorg', {
+      method: RequestMethod.GET  
+    });
+  }
 
   transform(res: any): Model {
     return new Model(res);
