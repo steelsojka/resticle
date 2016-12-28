@@ -27,9 +27,12 @@ export class TestResource implements ResourceTransform<Model> {
   charge: ResourceMethod<Model, Promise<Model>>
 
   @Put({
-    path: '/refund'
+    path: '/refund/:amount',
+    params: {
+      amount: 123      
+    }
   })
-  refund: ResourceMethod<Model, Promise<Model>>
+  putWithParam: ResourceMethod<Model, Promise<Model>>
 
   @Post({
     path: '/:name/post',
@@ -46,6 +49,26 @@ export class TestResource implements ResourceTransform<Model> {
     isArray: true
   })
   list: ResourceParamMethod<Promise<Model[]>>
+
+  @Get({
+    params: {
+      test: true
+    }
+  })
+  prepopulatedSearch: ResourceParamMethod<Promise<Model>>;
+
+  @Get()
+  getWithTransform: ResourceParamMethod<Promise<Model>>;
+
+  @Get({
+    transform: false
+  })
+  getWithoutTransform: ResourceParamMethod<Promise<Model>>;
+  
+  @Get({
+    isArray: true
+  })
+  getWithArrayTransform: ResourceParamMethod<Promise<Model[]>>;
 
   constructor(client: ResourceFetchClient, factory: DynamicResourceFactory<TestResource>) {
     factory.createAction(this, 'blorg', {

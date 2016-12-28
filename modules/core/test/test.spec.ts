@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { ResourceFactory } from '../src/ResourceFactory';
-import { TestResource } from './TestResource';
+import { TestResource, Model } from './TestResource';
 import { TestResourceClient } from '../../test-client/src';
 
 const client = new TestResourceClient();
@@ -65,6 +65,59 @@ describe('resticle', () => {
       client.expectPOST({
         path: 'http://myspace.com/rest/test/undefined/Steven/post'
       });
+    });    
+    
+    it('should prepopulate params', async () => {
+      resource.putWithParam({ id: 999 });
+      await client.flush();
+      
+      client.expectPUT({
+        path: 'http://myspace.com/rest/test/999/refund/123'
+      });
+    });    
+
+    it('should prepopulate query params', async () => {
+      resource.prepopulatedSearch({ id: 123 });
+      await client.flush();
+      
+      client.expectGET({
+        path: 'http://myspace.com/rest/test/123?test=true'
+      });
+    });    
+  });
+
+  describe('transform', () => {
+    it('should transform the data', async () => {
+      const promise = resource.getWithTransform();
+      
+      client.flush();
+      
+      const result = await promise;
+      
+      expect(result).to.be.an.instanceOf(Model);
+    });    
+
+    it('should transform the array data', async () => {
+      const promise = resource.getWithArrayTransform();
+      
+      client.step([{}, {}]);
+      
+      const result = await promise;
+      
+      expect(result[0]).to.be.an.instanceOf(Model);
+      expect(result[1]).to.be.an.instanceOf(Model);
+    });    
+    
+    it('should not transform the data', async () => {
+      const promise = resource.getWithoutTransform();
+      const data = {};
+      
+      client.step(data);
+      
+      const result = await promise;
+      
+      expect(result).not.to.be.an.instanceOf(Model);
+      expect(result).to.equal(data);
     });    
   });
 });

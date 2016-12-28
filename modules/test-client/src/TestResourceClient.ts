@@ -184,8 +184,16 @@ export class TestResourceClient implements ResourceFetchClient {
     });
 
     return deferred.promise
-      .then(value => this.onSuccess({ request: req, value, deferred }))
+      .then(value => {
+        this.onSuccess({ request: req, value, deferred });
+
+        return value;
+      })
       .catch(reason => this.onError({ request: req, value: reason, deferred }))
-      .then(value => this.completedRequests.push({ request: req, value, deferred }));
+      .then(value => {
+        this.completedRequests.push({ request: req, value, deferred })
+
+        return value;
+      });
   }
 }

@@ -110,9 +110,6 @@ export class ResourceFactory {
         }
       }
 
-      // Replace any path params that we didn't populate.
-      populatedPath = populatedPath.replace(factory.pathParamMatcher, '');
-
       url.set('pathname', populatedPath);
 
       let fullPath = url.href;
@@ -151,7 +148,7 @@ export class ResourceFactory {
     
     if (actionConfig.isArray) {
       if (!Array.isArray(res)) {
-        throw new Error('Expected array from action');
+        throw new Error(`Expected array from action. Got ${typeof res}.`);
       }
 
       return hasTransform ? res.map(v => resource.transform(v)) : res;
