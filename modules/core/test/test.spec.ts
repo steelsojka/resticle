@@ -76,6 +76,15 @@ describe('resticle', () => {
       });
     });    
 
+    it('should populate with path segment params', async () => {
+      resource.postWithPath({ account: { id: { value: 999 } } });
+      await client.flush();
+      
+      client.expectPOST({
+        path: 'http://myspace.com/rest/test/999'
+      });
+    });    
+
     it('should prepopulate query params', async () => {
       resource.prepopulatedSearch({ id: 123 });
       await client.flush();

@@ -24,7 +24,7 @@ export class TestResource implements ResourceTransform<Model> {
     method: RequestMethod.PUT,
     path: '/charge'
   })
-  charge: ActionDataMethod<Model, Promise<Model>>
+  charge: ActionDataMethod<Model, Promise<Model>>;
 
   @Put({
     path: '/refund/:amount',
@@ -32,7 +32,7 @@ export class TestResource implements ResourceTransform<Model> {
       amount: 123      
     }
   })
-  putWithParam: ActionDataMethod<Model, Promise<Model>>
+  putWithParam: ActionDataMethod<Model, Promise<Model>>;
 
   @Post({
     path: '/:name/post',
@@ -40,7 +40,15 @@ export class TestResource implements ResourceTransform<Model> {
       name: '@name'
     }
   })
-  postWithParam: ActionDataMethod<Model, Promise<Model>>
+  postWithParam: ActionDataMethod<Model, Promise<Model>>;
+
+  @Post({
+    params: {
+      id: '@account.id.value'
+    }
+  })
+  postWithPath: ActionDataMethod<Model, Promise<Model>>;
+  
   
   @Get()
   get: ActionMethod<Promise<Model>>

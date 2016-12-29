@@ -1,6 +1,6 @@
 import * as URL from 'url-parse';
 
-import { isFunction, clone } from './utils';
+import { isFunction, clone, isObject } from './utils';
 
 import { 
   ResourceFetchClient, 
@@ -18,15 +18,33 @@ import {
   FactoryOptions
 } from './common';
 
+/**
+ * Manages the creation and configuration of resources.
+ * @class ResourceFactory
+ * @export
+ */
 export class ResourceFactory {
   protected cache = new Map<Type<any>, any>();
   protected pathParamMatcher = /\/:[a-zA-Z0-9]*/g;
   
+  /**
+   * Creates a new ResourceFactory using the desired client.
+   * @param {ResourceFetchClient} client The client to use with this resource factory.
+   * @param {FactoryOptions} [options={}] Configuration options for the factory.
+   */
   constructor(
     private client: ResourceFetchClient, 
     private options: FactoryOptions = {}
   ) {}
 
+  /**
+   * Gets or creates a resource. Uses the defined metadata to generate the defined actions.
+   * Resources are singletons per factory so multiple calls with the same resource constructor
+   * will return the same instance.
+   * @template T The resource class type.
+   * @param {Type<T>} ResourceCtor The resource constructor.
+   * @returns T
+   */
   get<T>(ResourceCtor: Type<T>): T {
     if (this.cache.has(ResourceCtor)) {
       return this.cache.get(ResourceCtor) as T;
@@ -55,6 +73,16 @@ export class ResourceFactory {
     return resource;
   }
 
+  
+  /**
+   * Creates an action for the resource.
+   * @protected
+   * @template T
+   * @param {ResourceConfig} resConfig
+   * @param {T} resource
+   * @param {string} key
+   * @param {ResourceActionConfig} config
+   */
   protected createAction<T>(
     resConfig: ResourceConfig,
     resource: T, 
@@ -98,7 +126,10 @@ export class ResourceFactory {
           
           if (typeof param === 'string' && param.charAt(0) === '@') {
             if (payload) {
-              populatedPath = populatedPath.replace(pathMatcher, `/${factory.encodeParam(payload[param.slice(1)])}`);
+              populatedPath = populatedPath.replace(
+                pathMatcher, 
+                `/${factory.encodeParam(factory.getBodyValue(payload, param.slice(1)))}`
+              );
             } else {
               populatedPath = populatedPath.replace(pathMatcher, '');
             }
@@ -143,6 +174,14 @@ export class ResourceFactory {
     }
   }
 
+  /**
+   * Processes the resources transform method if it exists.
+   * @protected
+   * @param {*} res The response data.
+   * @param {*} resource The resource.
+   * @param {ResourceActionConfig} actionConfig The config for the action.
+   * @returns {*} The transformed data.
+   */
   protected processTransform(res: any, resource: any, actionConfig: ResourceActionConfig): any {
     const hasTransform = actionConfig.transform && isFunction(resource.transform);
     
@@ -157,12 +196,24 @@ export class ResourceFactory {
     return hasTransform ? resource.transform(res) : res;
   }
 
+  /**
+   * Encodes a param. This can be overridden by the client by providing the `encodeParam` hook.
+   * @protected
+   * @param {*} value The value to encode.
+   * @returns {string}
+   */
   protected encodeParam(value: any): string {
     return isFunction(this.client.encodeParam)
       ? this.client.encodeParam(value)
       : encodeURIComponent(value);
   }
 
+  /**
+   * Serializes the query object. Thie can be overridden by the client by providing the `serializeQuery` hook.
+   * @protected
+   * @param {{[key: string]: any}} query
+   * @returns {string}
+   */
   protected serializeQuery(query: {[key: string]: any}): string {
     if (isFunction(this.client.serializeQuery)) {
       return this.client.serializeQuery(query);
@@ -181,6 +232,12 @@ export class ResourceFactory {
       .join('&');
   }
 
+  /**
+   * Resolves a client method from a RequestMethod.
+   * @protected
+   * @param {RequestMethod} method
+   * @returns {(req: ResourceRequest<any>) => any}
+   */
   protected resolveClientMethod(method: RequestMethod): (req: ResourceRequest<any>) => any {
     switch (method) {
       case RequestMethod.GET: return this.client.get.bind(this.client);
@@ -192,6 +249,33 @@ export class ResourceFactory {
     throw new Error(`${method} is not a valid request method`);
   }
 
+  /**
+   * Gets a value from an object and a path.
+   * @protected
+   * @param {*} body
+   * @param {string} path
+   * @returns {*}
+   */
+  protected getBodyValue(body: any, path: string): any {
+    let next = body;
+    let segments = path.split('.');
+    let index = 0;
+    let length = segments.length;
+
+    while (next != null && index < length) {
+      next = next[segments[index++]];
+    }
+
+    return (index && index === length) ? next : undefined;
+  }
+
+  /**
+   * Parses the resource and action urls to make a single URL for the action being performed.
+   * @protected
+   * @param {ResourceActionConfig} config
+   * @param {ResourceConfig} resConfig
+   * @returns {ParsedURL}
+   */
   protected getParsedURL(config: ResourceActionConfig, resConfig: ResourceConfig): ParsedURL {
     const parsedURL = new URL(resConfig.path);
     const { pathname } = parsedURL;

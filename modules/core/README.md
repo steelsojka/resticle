@@ -65,6 +65,16 @@ userResource.get({ id: 123 }).then(user => {
 });
 ```
 
+### Params
+
+Resticle path params was inspired by `ng-resource` used by Angular 1. So the params
+matching is extremely similiar. Params are key/value pairs that map to path params
+or query params.
+
+- `@id`: This will grab the id key off of the payload if it exists and populate a path param.
+- `@account.id.value`: This will grab the id path off of the payload if it exists and populate a path param.
+- `123`: This will populate a path param or if the path param is not defined in the url template then it will be added as a query param.
+
 ### Configuring a Resource Action
 When defining a resource action you can configure it.
 
@@ -93,9 +103,11 @@ userResource.charge({ id: 123, amount: 59.99 }).then(() => {
 #### Action Arguments
 
 Action methods that are of method 'GET' and 'DELETE' have a method signature of
+
 `(params?: RequestParams, options?: RequestOptions) => any`
 
 Action methods that are of method 'POST' and 'PUT' have a method signature of
+
 `(model: T, params?: RequestParams, options?: RequestOptions) => any`
 
 Post and Put methods have a data model that it takes as the first argument.
@@ -112,6 +124,8 @@ is flagged as an array each value in the array will be transformed.
 })
 export class UserResource implements ResourceTransform<UserModel> {
   @Get()
+  // The 'ActionMethod' interface is a shorthand type for writing the
+  // method signature used in the above examples.
   get: ActionMethod<Promise<UserModel>>;
   
   @Get({
@@ -147,7 +161,7 @@ export class UserResource implements ResourceTransform<UserModel> {
   ) {
     factory.createAction(this, 'list', {
       method: RequestMethod.GET,
-      isArray;
+      isArray: true
     });    
   }
   
@@ -190,6 +204,14 @@ export class FetchResourceObservableClient extends FetchResourceClient {
 
   delete(req: ResourceRequest): Observable<any> {
     return this.toObservable(super.delete(req));
+  }
+
+  // The subscribe method is used to tell the ResourceFactory
+  // how to subscribe to the async container that the client is using.
+  // This method would look different if this client was using promises
+  // vs Observables.
+  subscribe(res: Observable<any>, callback: Function): Observable<any> {
+    return res.map(val => callback(val));
   }
 
   protected toObservable(promise: Promise<any>): Observable<any> {
