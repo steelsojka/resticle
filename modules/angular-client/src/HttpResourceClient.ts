@@ -25,6 +25,13 @@ import {
   HttpResponseInterceptor
 } from './common';
 
+/**
+ * A Resticle client using Angulars HTTP service. Adds support for request and response
+ * interceptors.
+ * @export
+ * @class HttpResourceClient
+ * @implements {ResourceFetchClient}
+ */
 @Injectable()
 export class HttpResourceClient implements ResourceFetchClient {
   constructor(
@@ -57,16 +64,24 @@ export class HttpResourceClient implements ResourceFetchClient {
     return reqResult.map(res => callback(res));
   }
 
+  /**
+   * Performs an Angular HTTP request and invokes interceptors.
+   * @protected
+   * @template T The return type.
+   * @param {ResourceRequest<T>} req
+   * @returns {Observable<T>}
+   */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return new Observable<T>((observer: Subscriber<T>) => {
-      let promise = Promise.resolve(req); 
+      let newReq = this.convertRequest(req);
+      let promise = Promise.resolve<RequestOptionsArgs>(newReq); 
 
       for (const interceptor of this.requestInterceptors) {
         promise = promise.then(_req => interceptor.request(_req));
       }
       
-      promise.then(newReq => {
-        this.http.request(req.path, this.convertRequest(newReq))
+      promise.then(_req => {
+        this.http.request(_req.url, _req)
           .map(res => {
             const data = this.extract<T>(res);
 
@@ -85,8 +100,16 @@ export class HttpResourceClient implements ResourceFetchClient {
     });
   }
 
-  private convertRequest<T>(req: ResourceRequest<T>): RequestOptionsArgs {
+  /**
+   * Maps a Resticle request to an Angular HTTP request.
+   * @protected
+   * @template T
+   * @param {ResourceRequest<T>} req
+   * @returns {RequestOptionsArgs}
+   */
+  protected convertRequest<T>(req: ResourceRequest<T>): RequestOptionsArgs {
     return {
+      url: req.path,
       withCredentials: Boolean(req.withCredentials),
       method: this.convertMethod(req.method),
       body: req.body,
@@ -96,7 +119,13 @@ export class HttpResourceClient implements ResourceFetchClient {
     };
   }
 
-  private convertResponseType(type?: ResticleResponseContentType): ResponseContentType {
+  /**
+   * Maps the response type to an Angular HTTP response type.
+   * @protected
+   * @param {ResticleResponseContentType} [type]
+   * @returns {ResponseContentType}
+   */
+  protected convertResponseType(type?: ResticleResponseContentType): ResponseContentType {
     switch (type) {
       case ResticleResponseContentType.BLOB: return ResponseContentType.Blob;
       case ResticleResponseContentType.ARRAY_BUFFER: return ResponseContentType.ArrayBuffer;
@@ -107,7 +136,13 @@ export class HttpResourceClient implements ResourceFetchClient {
     }
   }
 
-  private convertMethod(method: ResticleRequestMethod): RequestMethod {
+  /**
+   * Maps the request method to an Angular HTTP request method.
+   * @protected
+   * @param {ResticleRequestMethod} method
+   * @returns {RequestMethod}
+   */
+  protected convertMethod(method: ResticleRequestMethod): RequestMethod {
     switch (method) {
       case ResticleRequestMethod.DELETE: return RequestMethod.Delete;
       case ResticleRequestMethod.PUT: return RequestMethod.Put;
@@ -118,7 +153,13 @@ export class HttpResourceClient implements ResourceFetchClient {
     }
   }
 
-  private convertParams(search: {[key: string]: any}): URLSearchParams {
+  /**
+   * Maps a search object to an Angular Param object.
+   * @protected
+   * @param {{[key: string]: any}} search
+   * @returns {URLSearchParams}
+   */
+  protected convertParams(search: {[key: string]: any}): URLSearchParams {
     return Object.keys(search).reduce((params, key) => {
       params.set(key, search[key]);
 
@@ -126,7 +167,14 @@ export class HttpResourceClient implements ResourceFetchClient {
     }, new URLSearchParams());
   }
 
-  private extract<T>(res: Response): T {
+  /**
+   * Extracts data from the response object.
+   * @protected
+   * @template T Response type.
+   * @param {Response} res
+   * @returns {T}
+   */
+  protected extract<T>(res: Response): T {
     return res.json();  
   }
 }
