@@ -5,7 +5,9 @@ export enum RequestMethod {
   POST,
   PUT,
   DELETE,
-  GET  
+  GET,
+  HEAD,
+  PATCH  
 }
 
 export enum ResponseContentType {
@@ -275,4 +277,8 @@ export interface FactoryOptions {
    * The root path that will be prepended onto all paths.
    */
   rootPath?: string;
+  /**
+   * A set of default headers to apply to every request.
+   */
+  defaultHeaders?: {[key:string]: any};
 }

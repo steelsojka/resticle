@@ -1,6 +1,6 @@
 import * as URL from 'url-parse';
 
-import { isFunction, clone, isObject } from './utils';
+import { isFunction, clone, isObject, isString } from './utils';
 
 import { 
   ResourceFetchClient, 
@@ -18,6 +18,12 @@ import {
   FactoryOptions
 } from './common';
 
+const PayloadMethods = new Set<RequestMethod>([
+  RequestMethod.PATCH,
+  RequestMethod.POST,
+  RequestMethod.PUT  
+]);
+
 /**
  * Manages the creation and configuration of resources.
  * @class ResourceFactory
@@ -27,6 +33,9 @@ export class ResourceFactory {
   protected cache = new Map<Type<any>, any>();
   protected pathParamMatcher = /\/:[a-zA-Z0-9]*/g;
   
+  private _rootPath: string|undefined;
+  private _defaultHeaders: {[key: string]: any}|undefined;
+
   /**
    * Creates a new ResourceFactory using the desired client.
    * @param {ResourceFetchClient} client The client to use with this resource factory.
@@ -34,8 +43,39 @@ export class ResourceFactory {
    */
   constructor(
     private client: ResourceFetchClient, 
-    private options: FactoryOptions = {}
-  ) {}
+    options: FactoryOptions = {}
+  ) {
+    this.rootPath = options.rootPath;
+    this.defaultHeaders = options.defaultHeaders;
+  }
+
+  /**
+   * Default headers to apply to every request.
+   * @type {{[key: string]: any}}
+   */
+  get defaultHeaders(): {[key: string]: any} {
+    return this._defaultHeaders || {};
+  }
+
+  set defaultHeaders(value: {[key: string]: any}) {
+    if (isObject(value) && !Array.isArray(value)) {
+      this._defaultHeaders = value;
+    }
+  }
+
+  /**
+   * Root path to prefix every path with.
+   * @type {string}
+   */
+  get rootPath(): string {
+    return this._rootPath || '';
+  }
+
+  set rootPath(value: string) {
+    if (isString(value)) {
+      this._rootPath = value;  
+    }
+  }
 
   /**
    * Gets or creates a resource. Uses the defined metadata to generate the defined actions.
@@ -73,7 +113,6 @@ export class ResourceFactory {
     return resource;
   }
 
-  
   /**
    * Creates an action for the resource.
    * @protected
@@ -104,12 +143,12 @@ export class ResourceFactory {
       let params, payload = null;
       let url = new URL(parsedURL.href);
       
-      if (config.method !== RequestMethod.POST && config.method !== RequestMethod.PUT) {
-        params = payloadOrParams;
-        options = maybeParams;
-      } else {
+      if (PayloadMethods.has(config.method)) {
         params = maybeParams;
         payload = payloadOrParams;
+      } else {
+        params = payloadOrParams;
+        options = maybeParams;
       }
 
       params = Object.assign({}, resConfig.params, config.params, params);
@@ -145,8 +184,8 @@ export class ResourceFactory {
 
       let fullPath = url.href;
 
-      if (factory.options.rootPath) {
-        fullPath = `${factory.options.rootPath}${fullPath}`;
+      if (factory.rootPath) {
+        fullPath = `${factory.rootPath}${fullPath}`;
       }
 
       const queryString = factory.serializeQuery(query);
@@ -161,7 +200,7 @@ export class ResourceFactory {
         search: query,
         withCredentials: Boolean(options.withCredentials),
         body: payload,
-        headers: options.headers || {},
+        headers: Object.assign({}, factory.defaultHeaders, options.headers),
         method: config.method,
         responseType: options.hasOwnProperty('responseType') ? options.responseType : ResponseContentType.JSON,
         path: fullPath,

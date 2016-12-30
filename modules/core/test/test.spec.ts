@@ -151,4 +151,31 @@ describe('resticle', () => {
       });
     });  
   });
+
+  describe('default headers', () => {
+    it('should use default headers', async () => {
+      resourceFactory.defaultHeaders = {
+        testHeader: true  
+      };
+      
+      resource.get({ id: 123 }, {
+        withCredentials: true, 
+        headers: {
+          'User-Id': 'blorg',
+          'auth': 1234
+        }
+      });
+      
+      await client.flush();
+
+      client.expectGET({
+        withCredentials: true,
+        headers: {
+          'User-Id': 'blorg',
+          'auth': 1234,
+          'testHeader': true
+        }
+      });
+    });  
+  });
 });

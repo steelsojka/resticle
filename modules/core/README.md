@@ -189,21 +189,23 @@ this our resources can only be used with clients that use the same async contain
 You can easily extend a client and wrap all responses in either promises or observables.
 
 ```typescript
-export class FetchResourceObservableClient extends FetchResourceClient {
+export class FetchResourceObservableClient {
+  private fetchClient = new FetchResourceClient();
+  
   get(req: ResourceRequest): Observable<any> {
-    return this.toObservable(super.get(req));
+    return this.toObservable(this.fetchClient.get(req));
   }
 
   post(req: ResourceRequest): Observable<any> {
-    return this.toObservable(super.post(req));
+    return this.toObservable(this.fetchClient.post(req));
   }
 
   put(req: ResourceRequest): Observable<any> {
-    return this.toObservable(super.put(req));
+    return this.toObservable(this.fetchClient.put(req));
   }
 
   delete(req: ResourceRequest): Observable<any> {
-    return this.toObservable(super.delete(req));
+    return this.toObservable(this.fetchClient.delete(req));
   }
 
   // The subscribe method is used to tell the ResourceFactory

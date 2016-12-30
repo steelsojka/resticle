@@ -110,3 +110,17 @@ export const Delete = createShorthandMethodDecorator(RequestMethod.DELETE);
  * @type {PropertyDecorator}
  */
 export const Get = createShorthandMethodDecorator(RequestMethod.GET);
+/**
+ * A decorator that creates an action perbound to the 'HEAD' method.
+ * @param {ResourceActionConfig} config
+ * @export
+ * @type {PropertyDecorator}
+ */
+export const Head = createShorthandMethodDecorator(RequestMethod.HEAD);
+/**
+ * A decorator that creates an action perbound to the 'PATCH' method.
+ * @param {ResourceActionConfig} config
+ * @export
+ * @type {PropertyDecorator}
+ */
+export const Patch = createShorthandMethodDecorator(RequestMethod.PATCH);

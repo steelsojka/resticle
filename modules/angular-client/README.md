@@ -22,7 +22,7 @@ import {
 
 @NgModule({
   imports: [
-    AngualrClientModule
+    AngularClientModule
   ],
   providers: [
     { provide: HTTP_RESOURCE_CLIENT, useClass: HttpResourceClient }
