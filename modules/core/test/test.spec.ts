@@ -33,7 +33,7 @@ describe('resticle', () => {
     
     it('should omit the path id', async () => {
       resource.list();
-      await client.flush();
+      await client.step([]);
       
       client.expectGET({
         path: 'http://myspace.com/rest/test'
@@ -42,7 +42,7 @@ describe('resticle', () => {
 
     it('should add on query params', async () => {
       resource.list({ blorg: true, amount: 123 });
-      await client.flush();
+      await client.step([]);
       
       client.expectGET({
         path: 'http://myspace.com/rest/test?blorg=true&amount=123'

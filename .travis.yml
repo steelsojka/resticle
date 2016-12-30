@@ -1,0 +1,8 @@
+language: node_js
+node_js:
+  - '6'
+install:
+  - cd modules/test-client && npm install && cd ../../
+env:
+  - TEST_DIR=modules/core
+script: cd $TEST_DIR && npm install && npm test
