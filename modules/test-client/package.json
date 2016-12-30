@@ -15,7 +15,8 @@
     "resticle": "^1.0.0"
   },
   "devDependencies": {
+    "reflect-metadata": "^0.1.9",
     "resticle": "^1.0.0",
-    "reflect-metadata": "^0.1.9"
+    "typescript": "^2.1.4"
   }
 }
