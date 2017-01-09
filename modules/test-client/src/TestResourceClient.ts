@@ -18,6 +18,7 @@ export interface ExpectParams {
   search?: {[key: string]: any};
   withCredentials?: boolean;
   body?: any;
+  url?: string;
 }
 
 export class TestResourceClient implements ResourceFetchClient {
@@ -84,20 +85,20 @@ export class TestResourceClient implements ResourceFetchClient {
             case 'headers':
               this.assertObject(request.headers, params.headers, errors);
               break;
-            case 'params':
-              this.assertObject(request.search, params.search, errors);
-              break;
             case 'search':
               this.assertObject(request.search, params.search, errors);
               break;
             case 'path':
               this.assertValue(request.path, params.path, errors);
               break;
+            case 'url':
+              this.assertValue(request.url, params.url, errors);
+              break;
             case 'withCredentials':
               this.assertValue(request.withCredentials, params.withCredentials, errors);
               break;
             case 'body':
-              this.assertValue(request.body, params.body, errors);
+              this.assertObject(request.body, params.body, errors);
               break;
           }
         }
@@ -139,12 +140,14 @@ export class TestResourceClient implements ResourceFetchClient {
     this.completedRequests = [];
   }
   
-  protected methodToString(method: RequestMethod): string {
+  methodToString(method: RequestMethod): string {
     switch (method) {
       case RequestMethod.GET: return 'GET';
       case RequestMethod.POST: return 'POST';
       case RequestMethod.DELETE: return 'DELETE';
       case RequestMethod.PUT: return 'PUT';
+      case RequestMethod.HEAD: return 'HEAD';
+      case RequestMethod.PATCH: return 'PATCH';
       default:
         return '';
     }
@@ -158,6 +161,11 @@ export class TestResourceClient implements ResourceFetchClient {
 
   protected assertObject(obj: {[key: string]: any}, expected: {[key: string]: any}, errors: string[]): void {
     for (const key of Object.keys(expected)) {
+      if (typeof obj[key] === 'object' && typeof expected[key] === 'object') {
+        this.assertObject(obj[key], expected[key], errors);
+        continue;
+      }
+      
       if (obj[key] !== expected[key]) {
         errors.push(`Expect object ${JSON.stringify(obj, null, '  ')} to equal ${JSON.stringify(expected, null, '  ')}`);
         
@@ -185,15 +193,14 @@ export class TestResourceClient implements ResourceFetchClient {
 
     return deferred.promise
       .then(value => {
+        this.completedRequests.push({ request: req, value, deferred })
         this.onSuccess({ request: req, value, deferred });
 
         return value;
       })
-      .catch(reason => this.onError({ request: req, value: reason, deferred }))
-      .then(value => {
-        this.completedRequests.push({ request: req, value, deferred })
-
-        return value;
+      .catch(reason => {
+        this.completedRequests.push({ request: req, value: undefined, deferred })
+        this.onError({ request: req, value: reason, deferred })
       });
   }
 }

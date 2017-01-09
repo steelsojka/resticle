@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable, Inject, Optional, NgZone } from '@angular/core';
 import { 
   RequestMethod, 
   RequestOptionsArgs, 
@@ -11,6 +11,7 @@ import {
 import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/catch';
 import { 
   RequestMethod as ResticleRequestMethod,
   ResourceFetchClient, 
@@ -36,8 +37,9 @@ import {
 export class HttpResourceClient implements ResourceFetchClient {
   constructor(
     @Inject(Http) private http: Http,
-    @Inject(HTTP_REQUEST_INTERCEPTORS) private requestInterceptors: HttpRequestInterceptor<any>[] = [],
-    @Inject(HTTP_RESPONSE_INTERCEPTORS) private responseInterceptors: HttpResponseInterceptor<any>[] = []
+    @Inject(NgZone) private ngZone: NgZone,
+    @Inject(HTTP_REQUEST_INTERCEPTORS) @Optional() private requestInterceptors: HttpRequestInterceptor<any>[],
+    @Inject(HTTP_RESPONSE_INTERCEPTORS) @Optional() private responseInterceptors: HttpResponseInterceptor<any>[]
   ) {}
 
   get<T>(req: ResourceRequest<T>): Observable<T> {
@@ -73,28 +75,45 @@ export class HttpResourceClient implements ResourceFetchClient {
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return new Observable<T>((observer: Subscriber<T>) => {
-      let newReq = this.convertRequest(req);
-      let promise = Promise.resolve<RequestOptionsArgs>(newReq); 
+      this.ngZone.run(() => {
+        let newReq = this.convertRequest(req);
+        let promise = Promise.resolve<RequestOptionsArgs>(newReq); 
+        
+        const handleError = err => {
+          observer.error(err);
+          observer.complete();
+        }
 
-      for (const interceptor of this.requestInterceptors) {
-        promise = promise.then(_req => interceptor.request(_req));
-      }
-      
-      promise.then(_req => {
-        this.http.request(_req.url, _req)
-          .map(res => {
-            const data = this.extract<T>(res);
+        for (const interceptor of this.requestInterceptors || []) {
+          promise = promise.then(_req => interceptor.request(_req));
+        }
+        
+        promise.then(_req => {
+          this.http.request(_req.url, _req)
+            .catch((err, res) => {
+              handleError(err);
 
-            let promise = Promise.resolve(data);
+              return Observable.throw(err);
+            })
+            .subscribe(res => {
+              const data = this.extract<T>(res);
 
-            for (const resInterceptor of this.responseInterceptors) {
-              promise = promise.then(_res => resInterceptor.response(_res));
-            }
+              let promise = Promise.resolve(data);
 
-            promise.then(_res => {
-              observer.next(_res);
-              observer.complete();
-            });
+              for (const resInterceptor of this.responseInterceptors || []) {
+                promise = promise.then(_res => resInterceptor.response(_res));
+              }
+
+              promise.then(_res => {
+                observer.next(_res);
+                observer.complete();
+              });
+            }, handleError);
+        })
+          .catch(err => {
+            handleError(err);
+            
+            return Promise.reject(err);
           });
       });
     });
@@ -109,7 +128,7 @@ export class HttpResourceClient implements ResourceFetchClient {
    */
   protected convertRequest<T>(req: ResourceRequest<T>): RequestOptionsArgs {
     return {
-      url: req.path,
+      url: req.url,
       withCredentials: Boolean(req.withCredentials),
       method: this.convertMethod(req.method),
       body: req.body,

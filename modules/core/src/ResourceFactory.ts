@@ -1,5 +1,3 @@
-import * as URL from 'url-parse';
-
 import { isFunction, clone, isObject, isString } from './utils';
 
 import { 
@@ -17,6 +15,8 @@ import {
   RequestMethod,
   FactoryOptions
 } from './common';
+import { getOrCreateMetadata } from './utils';
+import { Action } from './decorators';
 
 const PayloadMethods = new Set<RequestMethod>([
   RequestMethod.PATCH,
@@ -97,14 +97,16 @@ export class ResourceFactory {
     }
 
     const resource = new ResourceCtor(this.client, {
-      createAction: this.createAction.bind(this, config)
+      createAction: (key: string, aConf: ResourceActionConfig) => {
+        Action(aConf)(ResourceCtor.prototype, key);
+      }
     });
 
-    const actions: ResourceActionMetadata[]|undefined = Reflect.getOwnMetadata(RESOURCE_ACTIONS_METADATA_KEY, ResourceCtor.prototype);
+    const actions: ResourceActionMetadata|undefined = Reflect.getOwnMetadata(RESOURCE_ACTIONS_METADATA_KEY, ResourceCtor.prototype);
 
     if (actions) {
-      for (const action of actions) {
-        this.createAction<T>(config, resource, action.key, action.config);
+      for (const key of Object.keys(actions)) {
+        this.createAction<T>(config, resource, key, actions[key]);
       }
     }
 
@@ -126,9 +128,15 @@ export class ResourceFactory {
     resConfig: ResourceConfig,
     resource: T, 
     key: string, 
-    config: ResourceActionConfig
+    actionConfig: ResourceActionConfig
   ): void {
-    const parsedURL = this.getParsedURL(config, resConfig);
+    let config = actionConfig;
+    
+    if (isFunction((<any>resource).actionCreated)) {
+      config = (<any>resource).actionCreated(actionConfig);
+    }
+    
+    const url = this.getParsedURL(config, resConfig);
     const factory = this;
     const client = this.client;
 
@@ -141,9 +149,8 @@ export class ResourceFactory {
 
     function action(payloadOrParams: any, maybeParams: any = {}, options: any = {}): any {
       let params, payload = null;
-      let url = new URL(parsedURL.href);
       
-      if (PayloadMethods.has(config.method)) {
+      if ((PayloadMethods.has(config.method) && config.hasBody !== false) || config.hasBody) {
         params = maybeParams;
         payload = payloadOrParams;
       } else {
@@ -153,58 +160,57 @@ export class ResourceFactory {
 
       params = Object.assign({}, resConfig.params, config.params, params);
 
-      let populatedPath = url.pathname;
+      let populatedPath = url;
       let query: {[key:string]: any} = {};
 
       for (const paramKey of Object.keys(params)) {
         const param = params[paramKey];
         const pathMatcher = new RegExp(`/:${paramKey}`);
 
-        if (pathMatcher.test(url.pathname)) {
+        if (pathMatcher.test(url)) {
           let value;
           
           if (typeof param === 'string' && param.charAt(0) === '@') {
             if (payload) {
-              populatedPath = populatedPath.replace(
-                pathMatcher, 
-                `/${factory.encodeParam(factory.getBodyValue(payload, param.slice(1)))}`
-              );
+              const value = factory.getBodyValue(payload, param.slice(1));
+              const replacement = value != null ? `/${factory.encodeParam(value)}` : '';
+              
+              populatedPath = populatedPath.replace(pathMatcher, replacement);
             } else {
               populatedPath = populatedPath.replace(pathMatcher, '');
             }
           } else {
-            populatedPath = populatedPath.replace(pathMatcher, `/${factory.encodeParam(param)}`);
+            populatedPath = populatedPath.replace(pathMatcher, param ? `/${factory.encodeParam(param)}` : '');
           }
         } else {
           query[paramKey] = param;
         }
       }
-
-      url.set('pathname', populatedPath);
-
-      let fullPath = url.href;
+      
+      let fullUrl = populatedPath;
 
       if (factory.rootPath) {
-        fullPath = `${factory.rootPath}${fullPath}`;
+        fullUrl = `${factory.rootPath}${fullUrl}`;
       }
 
       const queryString = factory.serializeQuery(query);
 
       if (queryString) {
-        fullPath = `${fullPath}?${queryString}`;
+        fullUrl = `${fullUrl}?${queryString}`;
       }
 
       const sendRequest = factory.resolveClientMethod(config.method);
       const req: ResourceRequest<any> = {
-        url,
+        url: fullUrl,
         search: query,
         withCredentials: Boolean(options.withCredentials),
         body: payload,
         headers: Object.assign({}, factory.defaultHeaders, options.headers),
         method: config.method,
         responseType: options.hasOwnProperty('responseType') ? options.responseType : ResponseContentType.JSON,
-        path: fullPath,
-        action: clone(config)
+        path: populatedPath,
+        action: clone(config),
+        options: clone(options)
       };
 
       return factory.client.subscribe(sendRequest(req), res => {
@@ -313,26 +319,15 @@ export class ResourceFactory {
    * @protected
    * @param {ResourceActionConfig} config
    * @param {ResourceConfig} resConfig
-   * @returns {ParsedURL}
+   * @returns {string}
    */
-  protected getParsedURL(config: ResourceActionConfig, resConfig: ResourceConfig): ParsedURL {
-    const parsedURL = new URL(resConfig.path);
-    const { pathname } = parsedURL;
-    let segments = pathname.split('/');
+  protected getParsedURL(config: ResourceActionConfig, resConfig: ResourceConfig): string {
+    let result = resConfig.path;
 
     if (config.path) {
-      let actionPath = (new URL(config.path)).pathname;
-      let actionSegments = actionPath.split('/');
-
-      if (actionSegments[0] === '') {
-        actionSegments.shift();
-      }
-
-      segments.push(...actionSegments);
+      result += config.path;
     }
 
-    parsedURL.set('pathname', segments.join('/'));
-
-    return parsedURL;
+    return result;
   }
 }

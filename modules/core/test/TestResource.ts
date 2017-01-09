@@ -79,7 +79,7 @@ export class TestResource implements ResourceTransform<Model> {
   getWithArrayTransform: ActionMethod<Promise<Model[]>>;
 
   constructor(client: ResourceFetchClient, factory: DynamicResourceFactory<TestResource>) {
-    factory.createAction(this, 'blorg', {
+    factory.createAction('blorg', {
       method: RequestMethod.GET  
     });
   }

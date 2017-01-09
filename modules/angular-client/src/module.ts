@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { HttpModule } from '@angular/http';
 import { ResourceFactory } from 'resticle';
 
 import { HttpResourceClient } from './HttpResourceClient';
@@ -7,6 +8,9 @@ import { factory } from './factory';
 import { HTTP_RESOURCE_CLIENT } from './common';
 
 @NgModule({
+  imports: [
+    HttpModule  
+  ],
   providers: [
     HttpResourceClient,
     HttpResourcePromiseClient,

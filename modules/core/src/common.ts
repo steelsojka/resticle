@@ -53,6 +53,10 @@ export interface TargetedResourceActionConfig {
    * request body.
    */
   params?: {[key: string]: any};
+  /**
+   * Whether the action signature should accept a body as it's first argument.
+   */
+  hasBody?: boolean;
 }
 
 export interface ResourceActionConfig extends TargetedResourceActionConfig {
@@ -76,8 +80,7 @@ export interface ResourceConfig {
 }
 
 export interface ResourceActionMetadata {
-  key: string;
-  config: ResourceActionConfig;
+  [key: string]: ResourceActionConfig;
 }
 
 export interface Type<T> {
@@ -90,12 +93,12 @@ export interface ResourceRequest<T> {
    */
   method: RequestMethod;
   /**
-   * The parsed URL used during path replacement.
-   */
-  url: ParsedURL;
-  /**
    * The resulting path to make the request to. This includes are path params populated
    * as well as any query string parameters encoded.
+   */
+  url: string;
+  /**
+   * The path portion of the URL before query params or root path.
    */
   path: string;
   /**
@@ -123,6 +126,10 @@ export interface ResourceRequest<T> {
    * this object since it is a deep clone of the configuration.
    */
   action: ResourceActionConfig;
+  /**
+   * Options for the request.
+   */
+  options: RequestOptions;
 }
 
 export interface RequestOptions {
@@ -262,11 +269,10 @@ export interface DynamicResourceFactory<T> {
   /**
    * Creates an action method. This is the same as annotating a method
    * except it is bound to the parent resource config.
-   * @param {T} resource The resource. In most use cases this will be `this`.
    * @param {string} key The name of the action method being created.
    * @param {ResourceActionConfig} config The action configuration.
    */
-  createAction(resource: T, key: string, config: ResourceActionConfig): void;
+  createAction(key: string, config: ResourceActionConfig): void;
 }
 
 /**

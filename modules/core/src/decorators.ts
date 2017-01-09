@@ -9,7 +9,7 @@ import {
   ResourceActionMetadata
 } from './common';
 
-import { isBoolean } from './utils';
+import { isBoolean, getOrCreateMetadata } from './utils';
 
 /**
  * Decorator for defining an action on a resource.
@@ -18,13 +18,10 @@ import { isBoolean } from './utils';
  * @returns {PropertyDecorator}
  */
 export function Action(config: ResourceActionConfig): PropertyDecorator {
-  return function resourceActionDecorator(target: typeof Resource, key: string): void {
-    let actions = getOrCreate<ResourceActionMetadata[]>(RESOURCE_ACTIONS_METADATA_KEY, [], target);
+  return function resourceActionDecorator(target: any, key: string): void {
+    let actions = getOrCreateMetadata<ResourceActionMetadata>(RESOURCE_ACTIONS_METADATA_KEY, {}, target);
 
-    actions.push({
-      key, 
-      config: setActionDefaults(config)
-    });
+    actions[key] = setActionDefaults(config);
 
     Reflect.defineMetadata(RESOURCE_ACTIONS_METADATA_KEY, actions, target);
   }
@@ -55,20 +52,6 @@ function setActionDefaults(config: ResourceActionConfig): ResourceActionConfig {
   config.isArray = Boolean(config.isArray);
 
   return config;
-}
-
-/**
- * A helper that gets or creates metadata under a specific key.
- * @template T The return type.
- * @param {string} key
- * @param {T} value
- * @param {*} target
- * @returns {T}
- */
-function getOrCreate<T>(key: string, value: T, target: any): T {
-  const metadata = Reflect.getOwnMetadata(key, target);
-
-  return metadata ? metadata : value;
 }
 
 /**

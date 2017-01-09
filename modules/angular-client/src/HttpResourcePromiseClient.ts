@@ -11,7 +11,7 @@ import {
   HttpRequestInterceptor,
   HttpResponseInterceptor
 } from './common';
-import { ResourceRequest, } from 'resticle';
+import { ResourceRequest, ResourceFetchClient } from 'resticle';
 import { HttpResourceClient } from './HttpResourceClient';
 
 /**
@@ -20,7 +20,7 @@ import { HttpResourceClient } from './HttpResourceClient';
  * @class HttpResourcePromiseClient
  */
 @Injectable()
-export class HttpResourcePromiseClient {
+export class HttpResourcePromiseClient implements ResourceFetchClient {
   constructor(
     @Inject(HttpResourceClient) private httpResourceClient: HttpResourceClient
   ) {}
@@ -43,5 +43,9 @@ export class HttpResourcePromiseClient {
 
   serializeQuery(): string {
     return '';
+  }
+
+  subscribe<T>(res: Promise<T>, callback: (val: any) => T): Promise<T> {
+    return res.then(val => callback(val));
   }
 }

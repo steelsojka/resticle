@@ -6,7 +6,7 @@ import { TestResourceClient } from '../../test-client/src';
 
 const client = new TestResourceClient();
 const resourceFactory = new ResourceFactory(client, {
-  rootPath: 'http://myspace.com/rest'
+  rootPath: '/rest'
 });
 
 describe('resticle', () => {
@@ -27,7 +27,7 @@ describe('resticle', () => {
       await client.flush();
       
       client.expectGET({
-        path: 'http://myspace.com/rest/test/123'
+        url: '/rest/test/123'
       });
     });    
     
@@ -36,7 +36,7 @@ describe('resticle', () => {
       await client.step([]);
       
       client.expectGET({
-        path: 'http://myspace.com/rest/test'
+        url: '/rest/test'
       });
     });    
 
@@ -45,7 +45,7 @@ describe('resticle', () => {
       await client.step([]);
       
       client.expectGET({
-        path: 'http://myspace.com/rest/test?blorg=true&amount=123'
+        url: '/rest/test?blorg=true&amount=123'
       });
     });    
 
@@ -54,7 +54,7 @@ describe('resticle', () => {
       await client.flush();
       
       client.expectPOST({
-        path: 'http://myspace.com/rest/test/123/Steven/post'
+        url: '/rest/test/123/Steven/post'
       });
     });    
 
@@ -63,7 +63,7 @@ describe('resticle', () => {
       await client.flush();
       
       client.expectPOST({
-        path: 'http://myspace.com/rest/test/undefined/Steven/post'
+        url: '/rest/test/Steven/post'
       });
     });    
     
@@ -72,7 +72,7 @@ describe('resticle', () => {
       await client.flush();
       
       client.expectPUT({
-        path: 'http://myspace.com/rest/test/999/refund/123'
+        url: '/rest/test/999/refund/123'
       });
     });    
 
@@ -81,7 +81,7 @@ describe('resticle', () => {
       await client.flush();
       
       client.expectPOST({
-        path: 'http://myspace.com/rest/test/999'
+        url: '/rest/test/999'
       });
     });    
 
@@ -90,7 +90,7 @@ describe('resticle', () => {
       await client.flush();
       
       client.expectGET({
-        path: 'http://myspace.com/rest/test/123?test=true'
+        url: '/rest/test/123?test=true'
       });
     });    
   });

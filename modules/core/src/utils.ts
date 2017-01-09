@@ -19,3 +19,17 @@ export function clone(value: any): any {
     ? JSON.parse(JSON.stringify(value))
     : value;
 }
+
+/**
+ * A helper that gets or creates metadata under a specific key.
+ * @template T The return type.
+ * @param {string} key
+ * @param {T} value
+ * @param {*} target
+ * @returns {T}
+ */
+export function getOrCreateMetadata<T>(key: string, value: T, target: any): T {
+  const metadata = Reflect.getOwnMetadata(key, target);
+
+  return metadata ? metadata : value;
+}
