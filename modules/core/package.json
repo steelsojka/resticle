@@ -1,6 +1,6 @@
 {
   "name": "resticle",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A REST resource library for managing RESTful resources",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
