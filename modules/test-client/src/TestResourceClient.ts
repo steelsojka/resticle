@@ -4,7 +4,7 @@ import {
   RequestMethod
 } from 'resticle';
 
-import { Deferred } from './utils';
+import { Deferred, isObject } from './utils';
 
 export interface MockRequest<T> {
   deferred: Deferred<T>;
@@ -160,8 +160,18 @@ export class TestResourceClient implements ResourceFetchClient {
   }
 
   protected assertObject(obj: {[key: string]: any}, expected: {[key: string]: any}, errors: string[]): void {
+    if (!isObject(expected) || !isObject(obj)) {
+      errors.push(`Expected an object as expected value.`);
+
+      return;
+    }
+
+    if (expected === obj) {
+      return;
+    }
+    
     for (const key of Object.keys(expected)) {
-      if (typeof obj[key] === 'object' && typeof expected[key] === 'object') {
+      if (isObject(obj[key]) && isObject(expected[key])) {
         this.assertObject(obj[key], expected[key], errors);
         continue;
       }
