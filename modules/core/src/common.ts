@@ -35,6 +35,7 @@ export interface ParsedURL {
 }
 
 export interface TargetedResourceActionConfig {
+  [key: string]: any;
   /**
    * The action path. This string is appended to the resource path.
    */
@@ -182,6 +183,13 @@ export interface ResourceFetchClient {
    * @returns {string}
    */
   encodeParam?: (value: string) => string;
+  
+  /**
+   * Resolves a client method from the config given.
+   * @param {ResourceActionConfig} config
+   * @returns {((req: ResourceRequest<any>) => any)|undefined}
+   */
+  resolveMethod?: (config: ResourceActionConfig) => ((req: ResourceRequest<any>) => any)|undefined;
   
   /**
    * Performs a `GET` request for the client.

@@ -199,7 +199,7 @@ export class ResourceFactory {
         fullUrl = `${fullUrl}?${queryString}`;
       }
 
-      const sendRequest = factory.resolveClientMethod(config.method);
+      const sendRequest = factory.resolveClientMethod(config);
       const req: ResourceRequest<any> = {
         url: fullUrl,
         search: query,
@@ -283,15 +283,23 @@ export class ResourceFactory {
    * @param {RequestMethod} method
    * @returns {(req: ResourceRequest<any>) => any}
    */
-  protected resolveClientMethod(method: RequestMethod): (req: ResourceRequest<any>) => any {
-    switch (method) {
+  protected resolveClientMethod(config: ResourceActionConfig): (req: ResourceRequest<any>) => any {
+    if (isFunction(this.client.resolveMethod)) {
+      const resolved = this.client.resolveMethod(config);
+
+      if (isFunction(resolved)) {
+        return resolved;
+      }
+    }
+    
+    switch (config.method) {
       case RequestMethod.GET: return this.client.get.bind(this.client);
       case RequestMethod.POST: return this.client.post.bind(this.client);
       case RequestMethod.DELETE: return this.client.delete.bind(this.client);
       case RequestMethod.PUT: return this.client.put.bind(this.client);
     }
 
-    throw new Error(`${method} is not a valid request method`);
+    throw new Error(`${config.method} is not a valid request method`);
   }
 
   /**
