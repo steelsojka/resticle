@@ -93,6 +93,17 @@ describe('resticle', () => {
         url: '/rest/test/123?test=true'
       });
     });    
+
+    it('should ignore body params when not present or in path', async () => {
+      resource.ignoreBodyParamNotInPath();
+
+      await client.flush();
+      
+      client.expectGET({
+        url: '/rest/test',
+        search: {}
+      });
+    });
   });
 
   describe('transform', () => {

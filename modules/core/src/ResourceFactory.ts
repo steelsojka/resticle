@@ -166,11 +166,12 @@ export class ResourceFactory {
       for (const paramKey of Object.keys(params)) {
         const param = params[paramKey];
         const pathMatcher = new RegExp(`/:${paramKey}`);
+        const isBodyParam = isString(param) && param.charAt(0) === '@';
 
         if (pathMatcher.test(url)) {
           let value;
           
-          if (typeof param === 'string' && param.charAt(0) === '@') {
+          if (isBodyParam) {
             if (payload) {
               const value = factory.getBodyValue(payload, param.slice(1));
               const replacement = value != null ? `/${factory.encodeParam(value)}` : '';
@@ -182,7 +183,7 @@ export class ResourceFactory {
           } else {
             populatedPath = populatedPath.replace(pathMatcher, param ? `/${factory.encodeParam(param)}` : '');
           }
-        } else {
+        } else if (!isBodyParam) {
           query[paramKey] = param;
         }
       }

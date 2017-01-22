@@ -78,6 +78,13 @@ export class TestResource implements ResourceTransform<Model> {
   })
   getWithArrayTransform: ActionMethod<Promise<Model[]>>;
 
+  @Get({
+    params: {
+      blorg: '@blorg'
+    }
+  })
+  ignoreBodyParamNotInPath: ActionMethod<Promise<Model>>;
+
   constructor(client: ResourceFetchClient, factory: DynamicResourceFactory<TestResource>) {
     factory.createAction('blorg', {
       method: RequestMethod.GET  
