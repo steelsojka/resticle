@@ -1,5 +1,5 @@
 import { OpaqueToken } from '@angular/core';
-import { RequestOptionsArgs } from '@angular/http';
+import { RequestOptionsArgs, Response } from '@angular/http';
 
 /**
  * Token for registering request interceptors.
@@ -37,5 +37,5 @@ export interface HttpRequestInterceptor<T> {
  * @template T
  */
 export interface HttpResponseInterceptor<T> {
-  response(res: T): any;
+  response(data: T, res: Response): any;
 }

@@ -75,7 +75,7 @@ export class HttpResourceClient implements ResourceFetchClient {
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return new Observable<T>((observer: Subscriber<T>) => {
-      this.ngZone.run(() => {
+      this.ngZone.runGuarded(() => {
         let newReq = this.convertRequest(req);
         let promise = Promise.resolve<RequestOptionsArgs>(newReq); 
         
@@ -101,7 +101,7 @@ export class HttpResourceClient implements ResourceFetchClient {
               let promise = Promise.resolve(data);
 
               for (const resInterceptor of this.responseInterceptors || []) {
-                promise = promise.then(_res => resInterceptor.response(_res));
+                promise = promise.then(_res => resInterceptor.response(_res, res));
               }
 
               promise.then(_res => {
