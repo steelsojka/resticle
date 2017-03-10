@@ -12,6 +12,9 @@ import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/observable/fromPromise';
+import 'rxjs/add/observable/of';
 import { 
   RequestMethod as ResticleRequestMethod,
   ResourceFetchClient, 
@@ -74,48 +77,44 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @returns {Observable<T>}
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
-    return new Observable<T>((observer: Subscriber<T>) => {
-      this.ngZone.runGuarded(() => {
-        let newReq = this.convertRequest(req);
-        let promise = Promise.resolve<RequestOptionsArgs>(newReq); 
-        
-        const handleError = err => {
-          observer.error(err);
-          observer.complete();
-        }
+    return this.ngZone.run(() => {
+      let newReq = this.convertRequest(req);
+      let reqChain = Observable.of(newReq); 
 
-        for (const interceptor of this.requestInterceptors || []) {
-          promise = promise.then(_req => interceptor.request(_req));
-        }
-        
-        promise.then(_req => {
-          this.http.request(_req.url, _req)
-            .catch((err, res) => {
-              handleError(err);
+      for (const interceptor of this.requestInterceptors || []) {
+        reqChain = reqChain.mergeMap(_req => Observable.fromPromise(Promise.resolve(interceptor.request(_req))));
+      }
 
-              return Observable.throw(err);
-            })
-            .subscribe(res => {
-              const data = this.extract<T>(res);
+      return reqChain
+        .catch(err => {
+          let $err = Observable.of(err);
 
-              let promise = Promise.resolve(data);
+          for (const reqInterceptor of this.requestInterceptors || []) {
+            $err = $err.mergeMap(_res => Observable.fromPromise(Promise.resolve(reqInterceptor.requestError(err, newReq))));
+          }
 
-              for (const resInterceptor of this.responseInterceptors || []) {
-                promise = promise.then(_res => resInterceptor.response(_res, res));
-              }
-
-              promise.then(_res => {
-                observer.next(_res);
-                observer.complete();
-              });
-            }, handleError);
+          return $err;
         })
-          .catch(err => {
-            handleError(err);
-            
-            return Promise.reject(err);
+        .mergeMap(_req => this.http.request(_req.url, _req))
+        .mergeMap(res => {
+          const data = this.extract<T>(res);
+
+          let $data = Observable.of(data);
+
+          for (const resInterceptor of this.responseInterceptors || []) {
+            $data = $data.mergeMap(_res => Observable.fromPromise(Promise.resolve(resInterceptor.response(_res, res))));
+          }
+
+          return $data.catch(err => {
+            let $err = Observable.of(err);
+
+            for (const resInterceptor of this.responseInterceptors || []) {
+              $err = $err.mergeMap(_res => Observable.fromPromise(Promise.resolve(resInterceptor.responseError(err, res))));
+            }
+
+            return $err;
           });
-      });
+        });
     });
   }
 
