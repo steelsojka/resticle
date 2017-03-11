@@ -1,6 +1,6 @@
 {
   "name": "resticle-angular-client",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
@@ -12,7 +12,7 @@
   "author": "Steven Sojka",
   "license": "MIT",
   "peerDependencies": {
-    "resticle": "^1.0.0",
+    "resticle": "^1.2.3",
     "@angular/common": "^2.4.1",
     "@angular/core": "^2.4.1",
     "@angular/http": "^2.4.1",
