@@ -4,7 +4,6 @@ import {
   ResourceFetchClient, 
   ResponseContentType,
   Type,
-  ParsedURL,
   ResourceRequest,
   RequestOptions,
   RESOURCE_METADATA_KEY,

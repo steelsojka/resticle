@@ -17,23 +17,6 @@ export enum ResponseContentType {
   BLOB  
 }
 
-export interface ParsedURL {
-  protocol: string;
-  slashes: boolean;
-  auth: {
-    username: string;
-    password: string;
-  }|null;
-  host: string;
-  hostname: string;
-  port: number|null;
-  pathname: string;
-  query: string;
-  hash: string;
-  href: string;
-  origin: string;
-}
-
 export interface TargetedResourceActionConfig {
   [key: string]: any;
   /**

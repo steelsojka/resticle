@@ -27,9 +27,28 @@ export const HTTP_RESOURCE_CLIENT = new OpaqueToken('HttpResourceClient');
  * @interface HttpRequestInterceptor
  * @template T
  */
-export interface HttpRequestInterceptor<T> {
-  request(req: RequestOptionsArgs): Observable<RequestOptionsArgs>|Promise<RequestOptionsArgs>;
-  requestError(err: any, req: RequestOptionsArgs): Observable<RequestOptionsArgs>|Promise<RequestOptionsArgs>;
+export interface HttpRequestInterceptor {
+  request(req: RequestOptionsArgs): RequestOptionsArgs|Promise<RequestOptionsArgs>;
+}
+
+/**
+ * A request error interceptor.
+ * @export
+ * @interface HttpRequestInterceptor
+ * @template T 
+ */
+export interface HttpRequestErrorInterceptor {
+  requestError(err: any, req: RequestOptionsArgs): RequestOptionsArgs|Promise<RequestOptionsArgs>;
+}
+
+/**
+ * A response interceptor.
+ * @export
+ * @interface HttpResponseInterceptor
+ * @template T The data type.
+ */
+export interface HttpResponseInterceptor {
+  response(data: any, res: Response): any|Promise<any>;
 }
 
 /**
@@ -38,7 +57,6 @@ export interface HttpRequestInterceptor<T> {
  * @interface HttpResponseInterceptor
  * @template T
  */
-export interface HttpResponseInterceptor<T> {
-  response(data: T, res: Response): Observable<any>|Promise<any>;
-  responseError(err: any, res: Response): Observable<any>|Promise<any>;
+export interface HttpResponseErrorInterceptor {
+  responseError(err: any, res: Response): any|Promise<any>;
 }

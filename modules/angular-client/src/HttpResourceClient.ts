@@ -26,8 +26,14 @@ import {
   HTTP_REQUEST_INTERCEPTORS,
   HTTP_RESPONSE_INTERCEPTORS,
   HttpRequestInterceptor,
-  HttpResponseInterceptor
+  HttpResponseInterceptor,
+  HttpRequestErrorInterceptor,
+  HttpResponseErrorInterceptor
 } from './common';
+
+export type HttpRequestInterceptors = Array<HttpRequestInterceptor|HttpRequestErrorInterceptor>;
+export type HttpResponseInterceptors = Array<HttpResponseInterceptor|HttpResponseErrorInterceptor>;
+export type HttpInterceptors = HttpRequestInterceptors|HttpResponseInterceptors;
 
 /**
  * A Resticle client using Angulars HTTP service. Adds support for request and response
@@ -41,8 +47,8 @@ export class HttpResourceClient implements ResourceFetchClient {
   constructor(
     @Inject(Http) private http: Http,
     @Inject(NgZone) private ngZone: NgZone,
-    @Inject(HTTP_REQUEST_INTERCEPTORS) @Optional() private requestInterceptors: HttpRequestInterceptor<any>[],
-    @Inject(HTTP_RESPONSE_INTERCEPTORS) @Optional() private responseInterceptors: HttpResponseInterceptor<any>[]
+    @Inject(HTTP_REQUEST_INTERCEPTORS) @Optional() private requestInterceptors: HttpRequestInterceptors|null,
+    @Inject(HTTP_RESPONSE_INTERCEPTORS) @Optional() private responseInterceptors: HttpResponseInterceptors|null
   ) {}
 
   get<T>(req: ResourceRequest<T>): Observable<T> {
@@ -78,44 +84,37 @@ export class HttpResourceClient implements ResourceFetchClient {
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return this.ngZone.run(() => {
-      let newReq = this.convertRequest(req);
-      let reqChain = Observable.of(newReq); 
+      const newReq = this.convertRequest(req);
 
-      for (const interceptor of this.requestInterceptors || []) {
-        reqChain = reqChain.mergeMap(_req => Observable.fromPromise(Promise.resolve(interceptor.request(_req))));
-      }
-
-      return reqChain
-        .catch(err => {
-          let $err = Observable.of(err);
-
-          for (const reqInterceptor of this.requestInterceptors || []) {
-            $err = $err.mergeMap(_res => Observable.fromPromise(Promise.resolve(reqInterceptor.requestError(err, newReq))));
-          }
-
-          return $err;
-        })
+      return this.executeInterceptor(this.requestInterceptors, newReq, 'request')
+        .catch(err => this.executeInterceptor(this.requestInterceptors, err, 'requestError', newReq))
         .mergeMap(_req => this.http.request(_req.url, _req))
         .mergeMap(res => {
-          const data = this.extract<T>(res);
-
-          let $data = Observable.of(data);
-
-          for (const resInterceptor of this.responseInterceptors || []) {
-            $data = $data.mergeMap(_res => Observable.fromPromise(Promise.resolve(resInterceptor.response(_res, res))));
-          }
-
-          return $data.catch(err => {
-            let $err = Observable.of(err);
-
-            for (const resInterceptor of this.responseInterceptors || []) {
-              $err = $err.mergeMap(_res => Observable.fromPromise(Promise.resolve(resInterceptor.responseError(err, res))));
-            }
-
-            return $err;
-          });
+          return this.executeInterceptor(this.responseInterceptors, this.extract(res), 'response', res)
+            .catch(err => this.executeInterceptor(this.responseInterceptors, err, 'responseError', res));
         });
     });
+  }
+
+  /**
+   * Executes an interceptor.
+   * @protected
+   * @param {HttpInterceptors|null} interceptors 
+   * @param {*} value 
+   * @param {string} name 
+   * @param {...any[]} args 
+   * @returns {Observable<any>} 
+   */
+  protected executeInterceptor(interceptors: HttpInterceptors|null, value: any, name: string, ...args: any[]): Observable<any> {
+    let $value = Observable.of(value);
+
+    for (const interceptor of interceptors || []) {
+      if (typeof interceptor[name] === 'function') {
+        $value = $value.mergeMap(_res => Observable.fromPromise(Promise.resolve(interceptor[name](_res, ...args))));
+      }
+    }
+
+    return $value;
   }
 
   /**
@@ -177,7 +176,7 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @param {{[key: string]: any}} search
    * @returns {URLSearchParams}
    */
-  protected convertParams(search: {[key: string]: any}): URLSearchParams {
+  protected convertParams(search: {[key: string]: any} = {}): URLSearchParams {
     return Object.keys(search).reduce((params, key) => {
       params.set(key, search[key]);
 

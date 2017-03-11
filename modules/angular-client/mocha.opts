@@ -1,0 +1,5 @@
+--require ts-node/register
+--require reflect-metadata
+--reporter spec
+--watch-extensions ts
+src/**/*.spec.ts
