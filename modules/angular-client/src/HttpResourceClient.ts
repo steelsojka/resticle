@@ -88,11 +88,11 @@ export class HttpResourceClient implements ResourceFetchClient {
 
       return this.executeInterceptor(this.requestInterceptors, newReq, 'request')
         .catch(err => this.executeInterceptor(this.requestInterceptors, err, 'requestError', newReq))
-        .mergeMap(_req => this.http.request(_req.url, _req))
-        .mergeMap(res => {
-          return this.executeInterceptor(this.responseInterceptors, this.extract(res), 'response', res)
-            .catch(err => this.executeInterceptor(this.responseInterceptors, err, 'responseError', res));
-        });
+        .mergeMap(_req => {
+          return this.http.request(_req.url, _req)
+            .catch(err => this.executeInterceptor(this.responseInterceptors, err, 'responseError', _req));
+        })
+        .mergeMap(res => this.executeInterceptor(this.responseInterceptors, this.extract(res), 'response', res));
     });
   }
 

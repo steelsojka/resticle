@@ -189,27 +189,50 @@ describe('HttpResourceClient', () => {
         });
       });
       
-      describe('when using a response error interceptor', () => {
-        let interceptorSpy: sinon.SinonSpy;
-        let requestSpy: sinon.SinonSpy;
+      describe('when the response interceptor errors', () => {
         let data;
         let interceptor: ResponseInterceptor;
 
-        class ResponseInterceptor implements HttpResponseInterceptor, HttpResponseErrorInterceptor {
+        class ResponseInterceptor implements HttpResponseInterceptor {
           response(res: any): any {
             return Promise.reject(new Error());    
           }
+        }
 
+        beforeEach(() => {
+          interceptor = new ResponseInterceptor();
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
+        });
+        
+        it('should fail the request', () => {
+          const $res = client[method]({}) as Observable<any>;
+
+          return $res.toPromise()
+            .then(() => assert.fail())
+            .catch(_res => expect(_res).to.be.an.instanceof(Error));
+        });
+      });
+      
+      describe('when using a response error interceptor and the request fails', () => {
+        let interceptorSpy: sinon.SinonSpy;
+        let requestSpy: sinon.SinonSpy;
+        let res, data;
+        let interceptor: ResponseInterceptor;
+
+        class ResponseInterceptor implements HttpResponseErrorInterceptor {
           responseError(): any {
-            return data;  
+            return res;  
           }
         }
 
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
           data = {};
+          res = {
+            json: () => data
+          };
           
-          requestSpy = stubs.http.request = spy(stubs.http.request);
+          requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
           interceptorSpy = spy(interceptor, 'responseError');
           client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
         });
@@ -234,6 +257,33 @@ describe('HttpResourceClient', () => {
           return $res.toPromise()
             .then(() => assert.fail())
             .catch(_res => expect(_res).to.equal(error));
+        });
+      });
+      
+      describe('when using a response error interceptor and it fails', () => {
+        let interceptorSpy: sinon.SinonSpy;
+        let requestSpy: sinon.SinonSpy;
+        let interceptor: ResponseInterceptor;
+
+        class ResponseInterceptor implements HttpResponseErrorInterceptor {
+          responseError(): any {
+            return Promise.reject(new Error());
+          }
+        }
+
+        beforeEach(() => {
+          interceptor = new ResponseInterceptor();
+          
+          requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
+        });
+        
+        it('should fail the request', () => {
+          const $res = client[method]({}) as Observable<any>;
+
+          return $res.toPromise()
+            .then(() => assert.fail())
+            .catch(_res => expect(_res).to.be.an.instanceof(Error));
         });
       });
     });

@@ -58,5 +58,5 @@ export interface HttpResponseInterceptor {
  * @template T
  */
 export interface HttpResponseErrorInterceptor {
-  responseError(err: any, res: Response): any|Promise<any>;
+  responseError(err: Response|any, req: RequestOptionsArgs): any|Promise<any>;
 }
