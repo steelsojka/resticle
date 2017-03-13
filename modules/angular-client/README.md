@@ -54,8 +54,8 @@ export class MyService {
 HTTP Interceptors
 -----------------
 
-You can register interceptor for the request or the reponse. These a registered through
-the DI using specific tokens. Here's an example of an auth request interceptor.
+You can register interceptor for the request or the response. These a registered through
+the DI using specific tokens. Interceptors can be asynchronous. Here's an example of an auth request interceptor.
 
 ```typescript
 import { Inject } from '@angular/core';
@@ -64,7 +64,7 @@ import { HttpRequestInterceptor } from 'resticle-angular-client';
 
 import { AuthService } from './Auth.service';
 
-export class AuthRequestInterceptor {
+export class AuthRequestInterceptor implements HttpRequestInterceptor{
   constructor(
     @Inject(AuthService) private authService: AuthService
   ) {}
@@ -94,14 +94,14 @@ You can register this interceptor in our auth module.
 
 ```typescript
 import { NgModule } from '@angular/core';
-import { HTTP_REQUEST_INTERCEPTORS } from 'resticle-angular-client';
+import { HTTP_INTERCEPTORS } from 'resticle-angular-client';
 
 import { AuthRequestInterceptor } from './AuthRequestInterceptor';
 import { AuthService } from './Auth.service';
 
 @NgModule({
   providers: [{
-    provide: HTTP_REQUEST_INTERCEPTORS,
+    provide: HTTP_INTERCEPTORS,
     useClass: AuthRequestInterceptor,
     multi: true // This is required
   },
@@ -109,4 +109,52 @@ import { AuthService } from './Auth.service';
   ]
 })
 export class AuthModule {}
+```
+
+Transforms
+----------
+
+You can register transforms for the request or the reponse. These are registered through
+the DI using specific tokens. Here's an example of transforming raw data to a model object. Transforms are synchronous.
+
+```typescript
+import { Inject } from '@angular/core';
+import { HttpResponseTransform } from 'resticle-angular-client';
+
+class Model {}
+class Person extends Model {}
+class CatPerson extends Person {}
+
+export interface SerializedModel {
+  type: string;
+}
+
+export class ModelTransformer implements HttpResponseTransform<SerializedModel, Model> {
+  response(data: SerializedModel): Model {
+    switch (data.type) {
+      case 'PERSON': return new Person(data);
+      case 'CAT_PERSON': return new CatPerson(data);
+    }
+
+    throw new Error(`No model exists for type '${data.type}!'`);
+  }
+}
+```
+
+You can register this transform in our module.
+
+```typescript
+import { NgModule } from '@angular/core';
+import { HTTP_TRANSFORMS } from 'resticle-angular-client';
+
+import { ModelTransformer } from './ModelTransformer';
+
+@NgModule({
+  providers: [{
+    provide: HTTP_TRANSFORMS,
+    useClass: ModelTransformer,
+    multi: true // This is required
+  }]
+})
+export class DataModule {}
 ```

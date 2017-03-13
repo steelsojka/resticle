@@ -22,18 +22,17 @@ import {
   ResponseContentType as ResticleResponseContentType 
 } from 'resticle';
 
-import {
-  HTTP_REQUEST_INTERCEPTORS,
-  HTTP_RESPONSE_INTERCEPTORS,
-  HttpRequestInterceptor,
-  HttpResponseInterceptor,
-  HttpRequestErrorInterceptor,
-  HttpResponseErrorInterceptor
+import { 
+  HTTP_INTERCEPTORS, 
+  HTTP_TRANSFORMS,
+  HttpInterceptor,
+  HttpTransform,
+  HttpResponseTransform,
+  HttpRequestTransform,
+  HttpResponseInterceptorType,
+  HttpRequestInterceptorType
 } from './common';
-
-export type HttpRequestInterceptors = Array<HttpRequestInterceptor|HttpRequestErrorInterceptor>;
-export type HttpResponseInterceptors = Array<HttpResponseInterceptor|HttpResponseErrorInterceptor>;
-export type HttpInterceptors = HttpRequestInterceptors|HttpResponseInterceptors;
+import { isFunction } from './utils';
 
 /**
  * A Resticle client using Angulars HTTP service. Adds support for request and response
@@ -47,8 +46,8 @@ export class HttpResourceClient implements ResourceFetchClient {
   constructor(
     @Inject(Http) private http: Http,
     @Inject(NgZone) private ngZone: NgZone,
-    @Inject(HTTP_REQUEST_INTERCEPTORS) @Optional() private requestInterceptors: HttpRequestInterceptors|null,
-    @Inject(HTTP_RESPONSE_INTERCEPTORS) @Optional() private responseInterceptors: HttpResponseInterceptors|null
+    @Inject(HTTP_INTERCEPTORS) @Optional() private _interceptors: HttpInterceptor[]|null,
+    @Inject(HTTP_TRANSFORMS) @Optional() private _transforms: HttpTransform[]|null,
   ) {}
 
   get<T>(req: ResourceRequest<T>): Observable<T> {
@@ -83,16 +82,17 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @returns {Observable<T>}
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
-    return this.ngZone.run(() => {
+    return this.ngZone.runGuarded(() => {
       const newReq = this.convertRequest(req);
+      let $chain = Observable.of(newReq);
 
-      return this.executeInterceptor(this.requestInterceptors, newReq, 'request')
-        .catch(err => this.executeInterceptor(this.requestInterceptors, err, 'requestError', newReq))
-        .mergeMap(_req => {
-          return this.http.request(_req.url, _req)
-            .catch(err => this.executeInterceptor(this.responseInterceptors, err, 'responseError', _req));
-        })
-        .mergeMap(res => this.executeInterceptor(this.responseInterceptors, this.extract(res), 'response', res));
+      $chain = this.executeInterceptor<RequestOptionsArgs>($chain, this._interceptors, [ 'request', 'requestError' ])
+        .map(req => this._runTransformers<RequestOptionsArgs>(req, 'request'))
+        .mergeMap(req => this.http.request(req.url, req));
+      
+      return this.executeInterceptor<Response>($chain, this._interceptors, [ 'response', 'responseError' ])
+        .map(res => this.extract<T>(res))
+        .map(res => this._runTransformers<T>(res, 'response'));
     });
   }
 
@@ -105,16 +105,18 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @param {...any[]} args 
    * @returns {Observable<any>} 
    */
-  protected executeInterceptor(interceptors: HttpInterceptors|null, value: any, name: string, ...args: any[]): Observable<any> {
-    let $value = Observable.of(value);
-
-    for (const interceptor of interceptors || []) {
-      if (typeof interceptor[name] === 'function') {
-        $value = $value.mergeMap(_res => Observable.fromPromise(Promise.resolve(interceptor[name](_res, ...args))));
+  protected executeInterceptor<T>($chain: Observable<T>, interceptors: HttpInterceptor[]|null, [ thenFn, errorFn ]: [ string, string ], ...args: any[]): Observable<T> {
+    return interceptors.reduce((result, interceptor) => {
+      if (isFunction(interceptor[thenFn])) {
+        result = result.mergeMap(_res => Observable.fromPromise(Promise.resolve(interceptor[thenFn](_res, ...args))));
       }
-    }
 
-    return $value;
+      if (isFunction(interceptor[errorFn])) {
+        result = result.catch(_res => Observable.fromPromise(Promise.resolve(interceptor[errorFn](_res, ...args))))
+      }
+
+      return result;
+    }, $chain);
   }
 
   /**
@@ -193,5 +195,17 @@ export class HttpResourceClient implements ResourceFetchClient {
    */
   protected extract<T>(res: Response): T {
     return res.json();  
+  }
+
+  private _runTransformers<T>(payload: any, method: string): T {
+    const transforms = this._transforms || [];
+    
+    return transforms.reduce((result, transform) => {
+      if (isFunction(transform[method])) {
+        return transform[method](payload);
+      }
+
+      return payload;
+    }, payload);
   }
 }

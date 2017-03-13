@@ -3,17 +3,17 @@ import { RequestOptionsArgs, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 
 /**
- * Token for registering request interceptors.
+ * Token for registering interceptors.
  * @export
  * @type {OpaqueToken}
  */
-export const HTTP_REQUEST_INTERCEPTORS = new OpaqueToken('HttpRequestInterceptors');
+export const HTTP_INTERCEPTORS = new OpaqueToken('HttpInterceptors');
 /**
- * Token for registering response interceptors.
+ * Token for registering interceptors.
  * @export
  * @type {OpaqueToken}
  */
-export const HTTP_RESPONSE_INTERCEPTORS = new OpaqueToken('HttpRequestInterceptors');
+export const HTTP_TRANSFORMS = new OpaqueToken('HttpTransforms');
 /**
  * Token used for registering the http client to use for the resource factory.
  * @export
@@ -60,3 +60,28 @@ export interface HttpResponseInterceptor {
 export interface HttpResponseErrorInterceptor {
   responseError(err: Response|any, req: RequestOptionsArgs): any|Promise<any>;
 }
+
+/**
+ * A response transformer.
+ * @export
+ * @interface HttpResponseTransform
+ * @template T The entering data type.
+ * @template U The transformed data type.
+ */
+export interface HttpResponseTransform<T, U> {
+  response(data: T): U;
+}
+
+/**
+ * A request transformer.
+ * @export
+ * @interface HttpRequestTransform 
+ */
+export interface HttpRequestTransform {
+  request(args: RequestOptionsArgs): RequestOptionsArgs;
+}
+
+export type HttpTransform = HttpRequestTransform|HttpResponseTransform<any, any>;
+export type HttpInterceptor = HttpResponseErrorInterceptor|HttpResponseInterceptor|HttpRequestErrorInterceptor|HttpRequestInterceptor;
+export type HttpRequestInterceptorType = HttpRequestErrorInterceptor|HttpRequestInterceptor;
+export type HttpResponseInterceptorType = HttpResponseErrorInterceptor|HttpResponseInterceptor;
