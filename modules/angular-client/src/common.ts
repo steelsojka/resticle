@@ -1,25 +1,26 @@
-import { OpaqueToken } from '@angular/core';
+import { InjectionToken } from '@angular/core';
 import { RequestOptionsArgs, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
+import { ResourceFetchClient } from 'resticle';
 
 /**
  * Token for registering interceptors.
  * @export
  * @type {OpaqueToken}
  */
-export const HTTP_INTERCEPTORS = new OpaqueToken('HttpInterceptors');
+export const HTTP_INTERCEPTORS = new InjectionToken<HttpInterceptor>('HttpInterceptors');
 /**
  * Token for registering interceptors.
  * @export
  * @type {OpaqueToken}
  */
-export const HTTP_TRANSFORMS = new OpaqueToken('HttpTransforms');
+export const HTTP_TRANSFORMS = new InjectionToken<HttpTransform>('HttpTransforms');
 /**
  * Token used for registering the http client to use for the resource factory.
  * @export
  * @type {OpaqueToken}
  */
-export const HTTP_RESOURCE_CLIENT = new OpaqueToken('HttpResourceClient');
+export const HTTP_RESOURCE_CLIENT = new InjectionToken<ResourceFetchClient>('HttpResourceClient');
 
 /**
  * A request interceptor.
