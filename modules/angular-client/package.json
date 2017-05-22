@@ -1,6 +1,6 @@
 {
   "name": "resticle-angular-client",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
