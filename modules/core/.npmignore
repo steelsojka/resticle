@@ -1,4 +1,3 @@
-src
 test
 mocha.opts
 tsconfig.json
