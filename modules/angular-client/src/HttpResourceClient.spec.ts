@@ -14,7 +14,8 @@ import {
   HttpRequestInterceptor, 
   HttpRequestErrorInterceptor,
   HttpResponseInterceptor,
-  HttpResponseErrorInterceptor
+  HttpResponseErrorInterceptor,
+  HttpResponseTransform
 } from './common';
 
 describe('HttpResourceClient', () => {
@@ -32,7 +33,7 @@ describe('HttpResourceClient', () => {
         request: () => Observable.of(res)
       },
       ngZone: {
-        run: spy(fn => fn())
+        runGuarded: spy(fn => fn())
       }
     };
   });
@@ -164,7 +165,7 @@ describe('HttpResourceClient', () => {
 
         class ResponseInterceptor implements HttpResponseInterceptor {
           response(res: any): any {
-            return data;    
+            return { json: () => data };    
           }
         }
 
@@ -174,7 +175,7 @@ describe('HttpResourceClient', () => {
           
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'response');
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
         });
 
         it('should invoke the interceptor', () => {
@@ -182,8 +183,7 @@ describe('HttpResourceClient', () => {
 
           return $res.toPromise().then(_res => {
             expect(interceptorSpy.callCount).to.equal(1);
-            expect(interceptorSpy.args[0][0]).to.equal(resData);
-            expect(interceptorSpy.args[0][1]).to.be.an('object');
+            expect(interceptorSpy.args[0][0]).to.equal(res);
             expect(_res).to.equal(data);
           });
         });
@@ -201,7 +201,7 @@ describe('HttpResourceClient', () => {
 
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
         });
         
         it('should fail the request', () => {
@@ -234,7 +234,7 @@ describe('HttpResourceClient', () => {
           
           requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
           interceptorSpy = spy(interceptor, 'responseError');
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
         });
 
         it('should invoke the interceptor', () => {
@@ -275,7 +275,7 @@ describe('HttpResourceClient', () => {
           interceptor = new ResponseInterceptor();
           
           requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ interceptor ]);
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
         });
         
         it('should fail the request', () => {
@@ -284,6 +284,34 @@ describe('HttpResourceClient', () => {
           return $res.toPromise()
             .then(() => assert.fail())
             .catch(_res => expect(_res).to.be.an.instanceof(Error));
+        });
+      });
+      
+      describe('when using a response transformer', () => {
+        let interceptorSpy: sinon.SinonSpy;
+        let requestSpy: sinon.SinonSpy;
+        let transform: ResponseTransformer;
+        let transformed;
+
+        class ResponseTransformer implements HttpResponseTransform<any, any> {
+          response(data: any): any {
+            return transformed;
+          }
+        }
+
+        beforeEach(() => {
+          transformed = {};
+          transform = new ResponseTransformer();
+          
+          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ transform ]);
+        });
+        
+        it('should transform the response', () => {
+          const $res = client[method]({}) as Observable<any>;
+
+          return $res.toPromise().then(_res => {
+            expect(_res).to.equal(transformed);
+          })
         });
       });
     });

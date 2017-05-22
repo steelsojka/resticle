@@ -5,12 +5,6 @@ import {
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/toPromise';
 
-import {
-  HTTP_REQUEST_INTERCEPTORS,
-  HTTP_RESPONSE_INTERCEPTORS,
-  HttpRequestInterceptor,
-  HttpResponseInterceptor
-} from './common';
 import { ResourceRequest, ResourceFetchClient } from 'resticle';
 import { HttpResourceClient } from './HttpResourceClient';
 
