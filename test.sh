@@ -5,5 +5,5 @@ test_modules="core angular-client"
 
 # Test
 for module in ${test_modules}; do
-  npm test --prefix modules/${module}
+  (cd modules/${module} && yarn test)
 done

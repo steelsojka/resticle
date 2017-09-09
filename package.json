@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "workspaces": [
+    "modules/angular-client",
+    "modules/fetch-client",
+    "modules/core",
+    "modules/test-client"
+  ]
+}
