@@ -1,8 +1,8 @@
 import { expect } from 'chai';
+import { TestResourceClient } from 'resticle-test-client';
 
 import { ResourceFactory, ResponseContentType } from '../src';
 import { TestResource, Model } from './TestResource';
-import { TestResourceClient } from '../../test-client/src';
 
 const client = new TestResourceClient();
 const resourceFactory = new ResourceFactory(client, {
