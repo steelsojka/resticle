@@ -1,6 +1,5 @@
 import { InjectionToken } from '@angular/core';
 import { RequestOptionsArgs, Response } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
 import { ResourceFetchClient } from 'resticle';
 
 /**
@@ -36,7 +35,7 @@ export interface HttpRequestInterceptor {
  * A request error interceptor.
  * @export
  * @interface HttpRequestInterceptor
- * @template T 
+ * @template T
  */
 export interface HttpRequestErrorInterceptor {
   requestError(err: any, req: RequestOptionsArgs): RequestOptionsArgs|Promise<RequestOptionsArgs>;
@@ -76,7 +75,7 @@ export interface HttpResponseTransform<T, U> {
 /**
  * A request transformer.
  * @export
- * @interface HttpRequestTransform 
+ * @interface HttpRequestTransform
  */
 export interface HttpRequestTransform {
   request(args: RequestOptionsArgs): RequestOptionsArgs;

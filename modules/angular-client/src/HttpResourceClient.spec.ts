@@ -1,17 +1,17 @@
 import { expect, assert } from 'chai';
 import { spy } from 'sinon';
-import { Observable } from 'rxjs/Rx';
+import { Observable, of } from 'rxjs';
 import { ResponseContentType, RequestMethod } from 'resticle';
-import { 
-  ResponseContentType as HttpResponseContentType, 
-  URLSearchParams, 
-  RequestMethod as HttpRequestMethod, 
-  RequestOptionsArgs 
+import {
+  ResponseContentType as HttpResponseContentType,
+  URLSearchParams,
+  RequestMethod as HttpRequestMethod,
+  RequestOptionsArgs
 } from '@angular/http';
 
 import { HttpResourceClient } from './HttpResourceClient';
 import {
-  HttpRequestInterceptor, 
+  HttpRequestInterceptor,
   HttpRequestErrorInterceptor,
   HttpResponseInterceptor,
   HttpResponseErrorInterceptor,
@@ -26,11 +26,11 @@ describe('HttpResourceClient', () => {
     res = {
       json: () => resData
     };
-    
+
     resData = {};
     stubs = {
       http: {
-        request: () => Observable.of(res)
+        request: () => of(res)
       },
       ngZone: {
         runGuarded: spy(fn => fn())
@@ -43,7 +43,7 @@ describe('HttpResourceClient', () => {
       describe('when no interceptors', () => {
         let requestSpy: sinon.SinonSpy;
         let req;
-        
+
         beforeEach(() => {
           req = {
             url: 'http://test.com',
@@ -58,9 +58,9 @@ describe('HttpResourceClient', () => {
             },
             responseType: ResponseContentType.BLOB
           };
-          
+
           requestSpy = stubs.http.request = spy(stubs.http.request);
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], []);  
+          client = new HttpResourceClient(stubs.http, [], []);
         });
 
         it('should return the result', () => {
@@ -106,10 +106,10 @@ describe('HttpResourceClient', () => {
 
         beforeEach(() => {
           const interceptor = new RequestInterceptor();
-          
+
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'request');
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], []);
+          client = new HttpResourceClient(stubs.http, [ interceptor ], []);
         });
 
         it('should invoke the interceptor', () => {
@@ -117,15 +117,15 @@ describe('HttpResourceClient', () => {
 
           return $res.toPromise().then(_res => {
             expect(interceptorSpy.callCount).to.equal(1);
-          
+
             const search = requestSpy.args[0][1].search as URLSearchParams;
-            
+
             expect(search.get('testy')).to.equal('boomf');
             expect(_res).to.equal(resData);
           });
         });
       });
-      
+
       describe('when using a request error interceptor', () => {
         let interceptorSpy: sinon.SinonSpy;
         let requestSpy: sinon.SinonSpy;
@@ -142,10 +142,10 @@ describe('HttpResourceClient', () => {
 
         beforeEach(() => {
           const interceptor = new RequestInterceptor();
-          
+
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'requestError');
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], []);
+          client = new HttpResourceClient(stubs.http, [ interceptor ], []);
         });
 
         it('should invoke the interceptor', () => {
@@ -157,7 +157,7 @@ describe('HttpResourceClient', () => {
           });
         });
       });
-      
+
       describe('when using a response interceptor', () => {
         let interceptorSpy: sinon.SinonSpy;
         let requestSpy: sinon.SinonSpy;
@@ -165,17 +165,17 @@ describe('HttpResourceClient', () => {
 
         class ResponseInterceptor implements HttpResponseInterceptor {
           response(res: any): any {
-            return { json: () => data };    
+            return { json: () => data };
           }
         }
 
         beforeEach(() => {
           const interceptor = new ResponseInterceptor();
           data = {};
-          
+
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'response');
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
         });
 
         it('should invoke the interceptor', () => {
@@ -188,22 +188,22 @@ describe('HttpResourceClient', () => {
           });
         });
       });
-      
+
       describe('when the response interceptor errors', () => {
         let data;
         let interceptor: ResponseInterceptor;
 
         class ResponseInterceptor implements HttpResponseInterceptor {
           response(res: any): any {
-            return Promise.reject(new Error());    
+            return Promise.reject(new Error());
           }
         }
 
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
         });
-        
+
         it('should fail the request', () => {
           const $res = client[method]({}) as Observable<any>;
 
@@ -212,7 +212,7 @@ describe('HttpResourceClient', () => {
             .catch(_res => expect(_res).to.be.an.instanceof(Error));
         });
       });
-      
+
       describe('when using a response error interceptor and the request fails', () => {
         let interceptorSpy: sinon.SinonSpy;
         let requestSpy: sinon.SinonSpy;
@@ -221,7 +221,7 @@ describe('HttpResourceClient', () => {
 
         class ResponseInterceptor implements HttpResponseErrorInterceptor {
           responseError(): any {
-            return res;  
+            return res;
           }
         }
 
@@ -231,10 +231,10 @@ describe('HttpResourceClient', () => {
           res = {
             json: () => data
           };
-          
+
           requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
           interceptorSpy = spy(interceptor, 'responseError');
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
         });
 
         it('should invoke the interceptor', () => {
@@ -246,12 +246,12 @@ describe('HttpResourceClient', () => {
             expect(_res).to.equal(data);
           });
         });
-        
+
         it('should fail the request', () => {
           const error = new Error();
-          
+
           interceptor.responseError = () => Promise.reject(error);
-          
+
           const $res = client[method]({}) as Observable<any>;
 
           return $res.toPromise()
@@ -259,7 +259,7 @@ describe('HttpResourceClient', () => {
             .catch(_res => expect(_res).to.equal(error));
         });
       });
-      
+
       describe('when using a response error interceptor and it fails', () => {
         let interceptorSpy: sinon.SinonSpy;
         let requestSpy: sinon.SinonSpy;
@@ -273,11 +273,11 @@ describe('HttpResourceClient', () => {
 
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
-          
+
           requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
         });
-        
+
         it('should fail the request', () => {
           const $res = client[method]({}) as Observable<any>;
 
@@ -286,7 +286,7 @@ describe('HttpResourceClient', () => {
             .catch(_res => expect(_res).to.be.an.instanceof(Error));
         });
       });
-      
+
       describe('when using a response transformer', () => {
         let interceptorSpy: sinon.SinonSpy;
         let requestSpy: sinon.SinonSpy;
@@ -302,10 +302,10 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           transformed = {};
           transform = new ResponseTransformer();
-          
-          client = new HttpResourceClient(stubs.http, stubs.ngZone, [], [ transform ]);
+
+          client = new HttpResourceClient(stubs.http, [], [ transform ]);
         });
-        
+
         it('should transform the response', () => {
           const $res = client[method]({}) as Observable<any>;
 

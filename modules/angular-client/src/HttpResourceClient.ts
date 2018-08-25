@@ -1,36 +1,27 @@
-import { Injectable, Inject, Optional, NgZone } from '@angular/core';
-import { 
-  RequestMethod, 
-  RequestOptionsArgs, 
-  ResponseContentType, 
-  Response, 
-  Http, 
-  Headers, 
-  URLSearchParams 
+import { Injectable, Inject, Optional } from '@angular/core';
+import {
+  RequestMethod,
+  RequestOptionsArgs,
+  ResponseContentType,
+  Response,
+  Http,
+  Headers,
+  URLSearchParams
 } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
-import { Subscriber } from 'rxjs/Subscriber';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/mergeMap';
-import 'rxjs/add/observable/fromPromise';
-import 'rxjs/add/observable/of';
-import { 
+import { Observable, of, from } from 'rxjs';
+import { map, mergeMap, catchError } from 'rxjs/operators';
+import {
   RequestMethod as ResticleRequestMethod,
-  ResourceFetchClient, 
-  ResourceRequest, 
-  ResponseContentType as ResticleResponseContentType 
+  ResourceFetchClient,
+  ResourceRequest,
+  ResponseContentType as ResticleResponseContentType
 } from 'resticle';
 
-import { 
-  HTTP_INTERCEPTORS, 
+import {
+  HTTP_INTERCEPTORS,
   HTTP_TRANSFORMS,
   HttpInterceptor,
-  HttpTransform,
-  HttpResponseTransform,
-  HttpRequestTransform,
-  HttpResponseInterceptorType,
-  HttpRequestInterceptorType
+  HttpTransform
 } from './common';
 import { isFunction } from './utils';
 
@@ -45,7 +36,6 @@ import { isFunction } from './utils';
 export class HttpResourceClient implements ResourceFetchClient {
   constructor(
     @Inject(Http) private http: Http,
-    @Inject(NgZone) private ngZone: NgZone,
     @Inject(HTTP_INTERCEPTORS) @Optional() private _interceptors: HttpInterceptor[]|null,
     @Inject(HTTP_TRANSFORMS) @Optional() private _transforms: HttpTransform[]|null,
   ) {}
@@ -53,7 +43,7 @@ export class HttpResourceClient implements ResourceFetchClient {
   get<T>(req: ResourceRequest<T>): Observable<T> {
     return this.request(req);
   }
-  
+
   put<T>(req: ResourceRequest<T>): Observable<T> {
     return this.request(req);
   }
@@ -71,7 +61,7 @@ export class HttpResourceClient implements ResourceFetchClient {
   }
 
   subscribe<T>(reqResult: Observable<T>, callback: (val: any) => T): Observable<T> {
-    return reqResult.map(res => callback(res));
+    return reqResult.pipe(map(res => callback(res)));
   }
 
   /**
@@ -82,37 +72,32 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @returns {Observable<T>}
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
-    return this.ngZone.runGuarded(() => {
-      const newReq = this.convertRequest(req);
-      let $chain = Observable.of(newReq);
-
-      $chain = this.executeInterceptor<RequestOptionsArgs>($chain, this._interceptors, [ 'request', 'requestError' ])
-        .map(req => this._runTransformers<RequestOptionsArgs>(req, 'request'))
-        .mergeMap(req => this.http.request(req.url, req));
-      
-      return this.executeInterceptor<Response>($chain, this._interceptors, [ 'response', 'responseError' ])
-        .map(res => this.extract<T>(res))
-        .map(res => this._runTransformers<T>(res, 'response'));
-    });
+    return of(this.convertRequest(req)).pipe(
+      source => this.executeInterceptor<RequestOptionsArgs>(source, this._interceptors, [ 'request', 'requestError' ]),
+      map(req => this._runTransformers<RequestOptionsArgs>(req, 'request')),
+      mergeMap<RequestOptionsArgs, Response>(req => this.http.request(req.url, req)),
+      source => this.executeInterceptor<Response>(source, this._interceptors, [ 'response', 'responseError' ]),
+      map<Response, T>(res => this.extract<T>(res)),
+      map(res => this._runTransformers<T>(res, 'response')));
   }
 
   /**
    * Executes an interceptor.
    * @protected
-   * @param {HttpInterceptors|null} interceptors 
-   * @param {*} value 
-   * @param {string} name 
-   * @param {...any[]} args 
-   * @returns {Observable<any>} 
+   * @param {HttpInterceptors|null} interceptors
+   * @param {*} value
+   * @param {string} name
+   * @param {...any[]} args
+   * @returns {Observable<any>}
    */
   protected executeInterceptor<T>($chain: Observable<T>, interceptors: HttpInterceptor[]|null, [ thenFn, errorFn ]: [ string, string ], ...args: any[]): Observable<T> {
     return interceptors.reduce((result, interceptor) => {
       if (isFunction(interceptor[thenFn])) {
-        result = result.mergeMap(_res => Observable.fromPromise(Promise.resolve(interceptor[thenFn](_res, ...args))));
+        result = result.pipe(mergeMap(_res => from(Promise.resolve(interceptor[thenFn](_res, ...args)))));
       }
 
       if (isFunction(interceptor[errorFn])) {
-        result = result.catch(_res => Observable.fromPromise(Promise.resolve(interceptor[errorFn](_res, ...args))))
+        result = result.pipe(catchError(_res => from(Promise.resolve(interceptor[errorFn](_res, ...args)))));
       }
 
       return result;
@@ -150,7 +135,7 @@ export class HttpResourceClient implements ResourceFetchClient {
       case ResticleResponseContentType.ARRAY_BUFFER: return ResponseContentType.ArrayBuffer;
       case ResticleResponseContentType.TEXT: return ResponseContentType.Text;
       case ResticleResponseContentType.JSON:
-      default: 
+      default:
         return ResponseContentType.Json;
     }
   }
@@ -167,7 +152,7 @@ export class HttpResourceClient implements ResourceFetchClient {
       case ResticleRequestMethod.PUT: return RequestMethod.Put;
       case ResticleRequestMethod.POST: return RequestMethod.Post;
       case ResticleRequestMethod.GET:
-      default: 
+      default:
         return RequestMethod.Get;
     }
   }
@@ -194,18 +179,18 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @returns {T}
    */
   protected extract<T>(res: Response): T {
-    return res.json();  
+    return res.json();
   }
 
   private _runTransformers<T>(payload: any, method: string): T {
     const transforms = this._transforms || [];
-    
+
     return transforms.reduce((result, transform) => {
       if (isFunction(transform[method])) {
-        return transform[method](payload);
+        return transform[method](result);
       }
 
-      return payload;
+      return result;
     }, payload);
   }
 }

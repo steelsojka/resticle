@@ -11,6 +11,10 @@
             "es2015",
             "scripthost",
             "dom.iterable"
+        ],
+        "typeRoots": [
+            "./node_modules/@types",
+            "../../node_modules/@types"
         ]
     },
     "include": [
