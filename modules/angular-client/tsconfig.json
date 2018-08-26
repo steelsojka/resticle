@@ -6,6 +6,7 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "moduleResolution": "node",
+        "skipLibCheck": true,
         "lib": [
             "dom",
             "es2015",

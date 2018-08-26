@@ -12,9 +12,9 @@
   "author": "Steven Sojka",
   "license": "MIT",
   "peerDependencies": {
-    "@angular/common": "^4.0.1",
-    "@angular/core": "^4.0.1",
-    "@angular/http": "^4.0.1",
+    "@angular/common": "6.x.x",
+    "@angular/core": "6.x.x",
+    "@angular/http": "6.x.x",
     "resticle": "^1.2.3",
     "rxjs": "6.x.x"
   },
@@ -29,6 +29,7 @@
     "chai": "^3.5.0",
     "mocha": "^3.2.0",
     "reflect-metadata": "^0.1.9",
+    "resticle-test-client": "*",
     "resticle": "^1.2.3",
     "rxjs": "6.x.x",
     "sinon": "^1.17.7",
