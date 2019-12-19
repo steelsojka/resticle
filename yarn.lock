@@ -4,21 +4,21 @@
 
 "@angular/common@^8":
   version "8.2.14"
-  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/@angular/common/-/common-8.2.14.tgz#027e52b2951c14082d6e3af1a4ffa1356220e439"
+  resolved "https://registry.yarnpkg.com/@angular/common/-/common-8.2.14.tgz#027e52b2951c14082d6e3af1a4ffa1356220e439"
   integrity sha1-An5SspUcFAgtbjrxpP+hNWIg5Dk=
   dependencies:
     tslib "^1.9.0"
 
 "@angular/core@^8":
   version "8.2.14"
-  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/@angular/core/-/core-8.2.14.tgz#35566f5b19480369229477e7e0e0fde740bd5204"
+  resolved "https://registry.yarnpkg.com/@angular/core/-/core-8.2.14.tgz#35566f5b19480369229477e7e0e0fde740bd5204"
   integrity sha1-NVZvWxlIA2kilHfn4OD950C9UgQ=
   dependencies:
     tslib "^1.9.0"
 
 "@angular/platform-browser@^8":
   version "8.2.14"
-  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/@angular/platform-browser/-/platform-browser-8.2.14.tgz#31f082e8ba977f9b89964d721c38cbc32ce0e433"
+  resolved "https://registry.yarnpkg.com/@angular/platform-browser/-/platform-browser-8.2.14.tgz#31f082e8ba977f9b89964d721c38cbc32ce0e433"
   integrity sha1-MfCC6LqXf5uJlk1yHDjLwyzg5DM=
   dependencies:
     tslib "^1.9.0"
@@ -1355,7 +1355,7 @@ typedarray@^0.0.6:
 
 typescript@^3.7.x:
   version "3.7.3"
-  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
   integrity sha1-s2hAZooWRYpwJbnqv60Rtmq4XGk=
 
 typescript@~2.1.4:
