@@ -79,10 +79,11 @@ export class HttpResourceClient implements ResourceFetchClient {
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return of(this.convertRequest(req)).pipe(
       source =>
-        this.executeInterceptor<Partial<HttpRequest<T>>>(source, this._interceptors, [
-          'request',
-          'requestError'
-        ]),
+        this.executeInterceptor<Partial<HttpRequest<T>>>(
+          source,
+          this._interceptors,
+          ['request', 'requestError']
+        ),
       map(req => this._runTransformers<HttpRequest<T>>(req, 'request')),
       mergeMap<HttpRequest<T>, HttpResponse<T>>(req =>
         this.http.request(req.method, req.url, req)
@@ -148,8 +149,28 @@ export class HttpResourceClient implements ResourceFetchClient {
       method: this.convertMethod(req.method),
       body: req.body,
       headers: new HttpHeaders(req.headers || {}),
-      params: this.convertParams(req.search)
+      params: this.convertParams(req.search),
+      responseType: this.convertResponseType(req.responseType)
     };
+  }
+
+  /**
+   * Converts the response type to Angular response type.
+   * @param type The content type
+   */
+  protected convertResponseType(
+    type: ResticleResponseContentType
+  ): 'arraybuffer' | 'blob' | 'json' | 'text' {
+    switch (type) {
+      case ResticleResponseContentType.BLOB:
+        return 'blob';
+      case ResticleResponseContentType.ARRAY_BUFFER:
+        return 'arraybuffer';
+      case ResticleResponseContentType.TEXT:
+        return 'text';
+      default:
+        return 'json';
+    }
   }
 
   /**

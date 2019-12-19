@@ -46,7 +46,8 @@ describe('HttpResourceClient', () => {
             },
             search: {
               bam: 'boom'
-            }
+            },
+            responseType: ResponseContentType.BLOB
           };
 
           requestSpy = stubs.http.request = spy(stubs.http.request);
@@ -75,6 +76,7 @@ describe('HttpResourceClient', () => {
             expect(reqArg.body).to.equal(req.body);
             expect(reqArg.headers.get('test')).to.equal('blorg');
             expect((<HttpParams>reqArg.params).get('bam')).to.equal('boom');
+            expect(reqArg.responseType).to.equal('blob')
           });
         });
       });
