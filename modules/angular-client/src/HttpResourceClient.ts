@@ -1,13 +1,11 @@
 import { Injectable, Inject, Optional } from '@angular/core';
 import {
-  RequestMethod,
-  RequestOptionsArgs,
-  ResponseContentType,
-  Response,
-  Http,
-  Headers,
-  URLSearchParams
-} from '@angular/http';
+  HttpRequest,
+  HttpResponse,
+  HttpClient,
+  HttpHeaders,
+  HttpParams
+} from '@angular/common/http';
 import { Observable, of, from } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 import {
@@ -35,9 +33,13 @@ import { isFunction } from './utils';
 @Injectable()
 export class HttpResourceClient implements ResourceFetchClient {
   constructor(
-    @Inject(Http) private http: Http,
-    @Inject(HTTP_INTERCEPTORS) @Optional() private _interceptors: HttpInterceptor[]|null,
-    @Inject(HTTP_TRANSFORMS) @Optional() private _transforms: HttpTransform[]|null,
+    @Inject(HttpClient) private http: HttpClient,
+    @Inject(HTTP_INTERCEPTORS)
+    @Optional()
+    private _interceptors: HttpInterceptor[] | null,
+    @Inject(HTTP_TRANSFORMS)
+    @Optional()
+    private _transforms: HttpTransform[] | null
   ) {}
 
   get<T>(req: ResourceRequest<T>): Observable<T> {
@@ -60,7 +62,10 @@ export class HttpResourceClient implements ResourceFetchClient {
     return ''; // Allow Angular to serialize the query.
   }
 
-  subscribe<T>(reqResult: Observable<T>, callback: (val: any) => T): Observable<T> {
+  subscribe<T>(
+    reqResult: Observable<T>,
+    callback: (val: any) => T
+  ): Observable<T> {
     return reqResult.pipe(map(res => callback(res)));
   }
 
@@ -73,12 +78,22 @@ export class HttpResourceClient implements ResourceFetchClient {
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return of(this.convertRequest(req)).pipe(
-      source => this.executeInterceptor<RequestOptionsArgs>(source, this._interceptors, [ 'request', 'requestError' ]),
-      map(req => this._runTransformers<RequestOptionsArgs>(req, 'request')),
-      mergeMap<RequestOptionsArgs, Response>(req => this.http.request(req.url, req)),
-      source => this.executeInterceptor<Response>(source, this._interceptors, [ 'response', 'responseError' ]),
-      map<Response, T>(res => this.extract<T>(res)),
-      map(res => this._runTransformers<T>(res, 'response')));
+      source =>
+        this.executeInterceptor<Partial<HttpRequest<T>>>(source, this._interceptors, [
+          'request',
+          'requestError'
+        ]),
+      map(req => this._runTransformers<HttpRequest<T>>(req, 'request')),
+      mergeMap<HttpRequest<T>, HttpResponse<T>>(req =>
+        this.http.request(req.method, req.url, req)
+      ),
+      source =>
+        this.executeInterceptor<HttpResponse<T>>(source, this._interceptors, [
+          'response',
+          'responseError'
+        ]),
+      map(res => this._runTransformers<T>(res, 'response'))
+    );
   }
 
   /**
@@ -90,14 +105,27 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @param {...any[]} args
    * @returns {Observable<any>}
    */
-  protected executeInterceptor<T>($chain: Observable<T>, interceptors: HttpInterceptor[]|null, [ thenFn, errorFn ]: [ string, string ], ...args: any[]): Observable<T> {
+  protected executeInterceptor<T>(
+    $chain: Observable<T>,
+    interceptors: HttpInterceptor[] | null,
+    [thenFn, errorFn]: [string, string],
+    ...args: any[]
+  ): Observable<T> {
     return interceptors.reduce((result, interceptor) => {
       if (isFunction(interceptor[thenFn])) {
-        result = result.pipe(mergeMap(_res => from(Promise.resolve(interceptor[thenFn](_res, ...args)))));
+        result = result.pipe(
+          mergeMap(_res =>
+            from(Promise.resolve(interceptor[thenFn](_res, ...args)))
+          )
+        );
       }
 
       if (isFunction(interceptor[errorFn])) {
-        result = result.pipe(catchError(_res => from(Promise.resolve(interceptor[errorFn](_res, ...args)))));
+        result = result.pipe(
+          catchError(_res =>
+            from(Promise.resolve(interceptor[errorFn](_res, ...args)))
+          )
+        );
       }
 
       return result;
@@ -111,33 +139,17 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @param {ResourceRequest<T>} req
    * @returns {RequestOptionsArgs}
    */
-  protected convertRequest<T>(req: ResourceRequest<T>): RequestOptionsArgs {
+  protected convertRequest<T>(
+    req: ResourceRequest<T>
+  ): Partial<HttpRequest<T>> {
     return {
       url: req.url,
       withCredentials: Boolean(req.withCredentials),
       method: this.convertMethod(req.method),
       body: req.body,
-      headers: new Headers(req.headers || {}),
-      search: this.convertParams(req.search),
-      responseType: this.convertResponseType(req.responseType)
+      headers: new HttpHeaders(req.headers || {}),
+      params: this.convertParams(req.search)
     };
-  }
-
-  /**
-   * Maps the response type to an Angular HTTP response type.
-   * @protected
-   * @param {ResticleResponseContentType} [type]
-   * @returns {ResponseContentType}
-   */
-  protected convertResponseType(type?: ResticleResponseContentType): ResponseContentType {
-    switch (type) {
-      case ResticleResponseContentType.BLOB: return ResponseContentType.Blob;
-      case ResticleResponseContentType.ARRAY_BUFFER: return ResponseContentType.ArrayBuffer;
-      case ResticleResponseContentType.TEXT: return ResponseContentType.Text;
-      case ResticleResponseContentType.JSON:
-      default:
-        return ResponseContentType.Json;
-    }
   }
 
   /**
@@ -146,14 +158,18 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @param {ResticleRequestMethod} method
    * @returns {RequestMethod}
    */
-  protected convertMethod(method: ResticleRequestMethod): RequestMethod {
+  protected convertMethod(
+    method: ResticleRequestMethod
+  ): 'delete' | 'put' | 'get' | 'post' {
     switch (method) {
-      case ResticleRequestMethod.DELETE: return RequestMethod.Delete;
-      case ResticleRequestMethod.PUT: return RequestMethod.Put;
-      case ResticleRequestMethod.POST: return RequestMethod.Post;
-      case ResticleRequestMethod.GET:
+      case ResticleRequestMethod.DELETE:
+        return 'delete';
+      case ResticleRequestMethod.PUT:
+        return 'put';
+      case ResticleRequestMethod.POST:
+        return 'post';
       default:
-        return RequestMethod.Get;
+        return 'get';
     }
   }
 
@@ -163,23 +179,11 @@ export class HttpResourceClient implements ResourceFetchClient {
    * @param {{[key: string]: any}} search
    * @returns {URLSearchParams}
    */
-  protected convertParams(search: {[key: string]: any} = {}): URLSearchParams {
-    return Object.keys(search).reduce((params, key) => {
-      params.set(key, search[key]);
-
-      return params;
-    }, new URLSearchParams());
-  }
-
-  /**
-   * Extracts data from the response object.
-   * @protected
-   * @template T Response type.
-   * @param {Response} res
-   * @returns {T}
-   */
-  protected extract<T>(res: Response): T {
-    return res.json();
+  protected convertParams(search: { [key: string]: any } = {}): HttpParams {
+    return Object.keys(search).reduce(
+      (params, key) => params.set(key, search[key]),
+      new HttpParams()
+    );
   }
 
   private _runTransformers<T>(payload: any, method: string): T {

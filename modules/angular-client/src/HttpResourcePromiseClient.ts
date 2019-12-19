@@ -38,3 +38,4 @@ export class HttpResourcePromiseClient implements ResourceFetchClient {
     return res.then(val => callback(val));
   }
 }
+

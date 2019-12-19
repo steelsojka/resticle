@@ -2,12 +2,7 @@ import { expect, assert } from 'chai';
 import { spy } from 'sinon';
 import { Observable, of } from 'rxjs';
 import { ResponseContentType, RequestMethod } from 'resticle';
-import {
-  ResponseContentType as HttpResponseContentType,
-  URLSearchParams,
-  RequestMethod as HttpRequestMethod,
-  RequestOptionsArgs
-} from '@angular/http';
+import { HttpParams, HttpRequest } from '@angular/common/http';
 
 import { HttpResourceClient } from './HttpResourceClient';
 import {
@@ -19,15 +14,11 @@ import {
 } from './common';
 
 describe('HttpResourceClient', () => {
-  let stubs, res, resData;
+  let stubs, res;
   let client: HttpResourceClient;
 
   beforeEach(() => {
-    res = {
-      json: () => resData
-    };
-
-    resData = {};
+    res = {};
     stubs = {
       http: {
         request: () => of(res)
@@ -55,8 +46,7 @@ describe('HttpResourceClient', () => {
             },
             search: {
               bam: 'boom'
-            },
-            responseType: ResponseContentType.BLOB
+            }
           };
 
           requestSpy = stubs.http.request = spy(stubs.http.request);
@@ -67,7 +57,7 @@ describe('HttpResourceClient', () => {
           const $res = client[method](req) as Observable<any>;
 
           return $res.toPromise().then(_res => {
-            expect(_res).to.equal(resData);
+            expect(_res).to.equal(res);
           });
         });
 
@@ -75,17 +65,16 @@ describe('HttpResourceClient', () => {
           const $res = client[method](req) as Observable<any>;
 
           return $res.toPromise().then(() => {
-            const reqArg = requestSpy.args[0][1] as RequestOptionsArgs;
+            const reqArg = requestSpy.args[0][2] as Partial<HttpRequest<any>>;
             expect(requestSpy.called).to.be.true;
-            expect(requestSpy.args[0][0]).to.equal('http://test.com');
+            expect(requestSpy.args[0][1]).to.equal('http://test.com');
+            expect(requestSpy.args[0][0]).to.equal('get');
             expect(reqArg).to.be.an('object');
             expect(reqArg.url).to.equal('http://test.com');
             expect(reqArg.withCredentials).to.be.true;
-            expect(reqArg.method).to.equal(HttpRequestMethod.Get);
             expect(reqArg.body).to.equal(req.body);
             expect(reqArg.headers.get('test')).to.equal('blorg');
-            expect((<URLSearchParams>reqArg.search).get('bam')).to.equal('boom');
-            expect(reqArg.responseType).to.equal(HttpResponseContentType.Blob);
+            expect((<HttpParams>reqArg.params).get('bam')).to.equal('boom');
           });
         });
       });
@@ -95,10 +84,10 @@ describe('HttpResourceClient', () => {
         let requestSpy: sinon.SinonSpy;
 
         class RequestInterceptor implements HttpRequestInterceptor {
-          request(req: RequestOptionsArgs): any {
-            const search = req.search as URLSearchParams;
+          request(req: any): any {
+            const search = req.params as HttpParams;
 
-            search.set('testy', 'boomf');
+            req.params = search.set('testy', 'boomf');
 
             return Promise.resolve(req);
           }
@@ -109,7 +98,7 @@ describe('HttpResourceClient', () => {
 
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'request');
-          client = new HttpResourceClient(stubs.http, [ interceptor ], []);
+          client = new HttpResourceClient(stubs.http, [interceptor], []);
         });
 
         it('should invoke the interceptor', () => {
@@ -118,10 +107,10 @@ describe('HttpResourceClient', () => {
           return $res.toPromise().then(_res => {
             expect(interceptorSpy.callCount).to.equal(1);
 
-            const search = requestSpy.args[0][1].search as URLSearchParams;
+            const search = requestSpy.args[0][2].params as HttpParams;
 
             expect(search.get('testy')).to.equal('boomf');
-            expect(_res).to.equal(resData);
+            expect(_res).to.equal(res);
           });
         });
       });
@@ -130,8 +119,9 @@ describe('HttpResourceClient', () => {
         let interceptorSpy: sinon.SinonSpy;
         let requestSpy: sinon.SinonSpy;
 
-        class RequestInterceptor implements HttpRequestInterceptor, HttpRequestErrorInterceptor {
-          request(req: RequestOptionsArgs): any {
+        class RequestInterceptor
+          implements HttpRequestInterceptor, HttpRequestErrorInterceptor {
+          request(req: Partial<HttpRequest<any>>): any {
             return Promise.reject(new Error());
           }
 
@@ -145,7 +135,7 @@ describe('HttpResourceClient', () => {
 
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'requestError');
-          client = new HttpResourceClient(stubs.http, [ interceptor ], []);
+          client = new HttpResourceClient(stubs.http, [interceptor], []);
         });
 
         it('should invoke the interceptor', () => {
@@ -153,7 +143,7 @@ describe('HttpResourceClient', () => {
 
           return $res.toPromise().then(_res => {
             expect(interceptorSpy.callCount).to.equal(1);
-            expect(_res).to.equal(resData);
+            expect(_res).to.equal(res);
           });
         });
       });
@@ -165,7 +155,7 @@ describe('HttpResourceClient', () => {
 
         class ResponseInterceptor implements HttpResponseInterceptor {
           response(res: any): any {
-            return { json: () => data };
+            return data;
           }
         }
 
@@ -175,7 +165,7 @@ describe('HttpResourceClient', () => {
 
           requestSpy = stubs.http.request = spy(stubs.http.request);
           interceptorSpy = spy(interceptor, 'response');
-          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [interceptor], null);
         });
 
         it('should invoke the interceptor', () => {
@@ -201,13 +191,14 @@ describe('HttpResourceClient', () => {
 
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
-          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [interceptor], null);
         });
 
         it('should fail the request', () => {
           const $res = client[method]({}) as Observable<any>;
 
-          return $res.toPromise()
+          return $res
+            .toPromise()
             .then(() => assert.fail())
             .catch(_res => expect(_res).to.be.an.instanceof(Error));
         });
@@ -228,13 +219,13 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
           data = {};
-          res = {
-            json: () => data
-          };
+          res = data;
 
-          requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
+          requestSpy = stubs.http.request = spy(() =>
+            Observable.throw(new Error())
+          );
           interceptorSpy = spy(interceptor, 'responseError');
-          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
+          client = new HttpResourceClient(stubs.http, [interceptor], null);
         });
 
         it('should invoke the interceptor', () => {
@@ -254,7 +245,8 @@ describe('HttpResourceClient', () => {
 
           const $res = client[method]({}) as Observable<any>;
 
-          return $res.toPromise()
+          return $res
+            .toPromise()
             .then(() => assert.fail())
             .catch(_res => expect(_res).to.equal(error));
         });
@@ -274,14 +266,17 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
 
-          requestSpy = stubs.http.request = spy(() => Observable.throw(new Error()));
-          client = new HttpResourceClient(stubs.http, [ interceptor ], null);
+          requestSpy = stubs.http.request = spy(() =>
+            Observable.throw(new Error())
+          );
+          client = new HttpResourceClient(stubs.http, [interceptor], null);
         });
 
         it('should fail the request', () => {
           const $res = client[method]({}) as Observable<any>;
 
-          return $res.toPromise()
+          return $res
+            .toPromise()
             .then(() => assert.fail())
             .catch(_res => expect(_res).to.be.an.instanceof(Error));
         });
@@ -303,7 +298,7 @@ describe('HttpResourceClient', () => {
           transformed = {};
           transform = new ResponseTransformer();
 
-          client = new HttpResourceClient(stubs.http, [], [ transform ]);
+          client = new HttpResourceClient(stubs.http, [], [transform]);
         });
 
         it('should transform the response', () => {
@@ -311,9 +306,10 @@ describe('HttpResourceClient', () => {
 
           return $res.toPromise().then(_res => {
             expect(_res).to.equal(transformed);
-          })
+          });
         });
       });
     });
   }
 });
+

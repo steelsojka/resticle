@@ -2,27 +2,24 @@
 # yarn lockfile v1
 
 
-"@angular/common@^6.1.4":
-  version "6.1.4"
-  resolved "https://registry.yarnpkg.com/@angular/common/-/common-6.1.4.tgz#825de5b1fb98db5a1d3d2253ad7181bb25477551"
+"@angular/common@^8":
+  version "8.2.14"
+  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/@angular/common/-/common-8.2.14.tgz#027e52b2951c14082d6e3af1a4ffa1356220e439"
+  integrity sha1-An5SspUcFAgtbjrxpP+hNWIg5Dk=
   dependencies:
     tslib "^1.9.0"
 
-"@angular/core@^6.1.4":
-  version "6.1.4"
-  resolved "https://registry.yarnpkg.com/@angular/core/-/core-6.1.4.tgz#2602ecc031bbb4ad968a7db78786017e92d19b98"
+"@angular/core@^8":
+  version "8.2.14"
+  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/@angular/core/-/core-8.2.14.tgz#35566f5b19480369229477e7e0e0fde740bd5204"
+  integrity sha1-NVZvWxlIA2kilHfn4OD950C9UgQ=
   dependencies:
     tslib "^1.9.0"
 
-"@angular/http@^6.1.4":
-  version "6.1.4"
-  resolved "https://registry.yarnpkg.com/@angular/http/-/http-6.1.4.tgz#0ab24a51075daaba60a4241200c44dcfcd87da5e"
-  dependencies:
-    tslib "^1.9.0"
-
-"@angular/platform-browser@^6.1.4":
-  version "6.1.4"
-  resolved "https://registry.yarnpkg.com/@angular/platform-browser/-/platform-browser-6.1.4.tgz#a5763f549f2073ba30b9d8baf8512c8076e8d58b"
+"@angular/platform-browser@^8":
+  version "8.2.14"
+  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/@angular/platform-browser/-/platform-browser-8.2.14.tgz#31f082e8ba977f9b89964d721c38cbc32ce0e433"
+  integrity sha1-MfCC6LqXf5uJlk1yHDjLwyzg5DM=
   dependencies:
     tslib "^1.9.0"
 
@@ -1356,9 +1353,10 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
-typescript@^2.2.x:
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.9.2.tgz#1cbf61d05d6b96269244eb6a3bce4bd914e0f00c"
+typescript@^3.7.x:
+  version "3.7.3"
+  resolved "https://artifactory.associatesys.local:443/artifactory/api/npm/npm-virtual/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
+  integrity sha1-s2hAZooWRYpwJbnqv60Rtmq4XGk=
 
 typescript@~2.1.4:
   version "2.1.6"

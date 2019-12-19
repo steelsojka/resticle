@@ -12,29 +12,27 @@
   "author": "Steven Sojka",
   "license": "MIT",
   "peerDependencies": {
-    "@angular/common": "6.x.x",
-    "@angular/core": "6.x.x",
-    "@angular/http": "6.x.x",
+    "@angular/common": "8.x.x",
+    "@angular/core": "8.x.x",
     "resticle": "^1.2.3",
-    "rxjs": "6.x.x"
+    "rxjs": ">=6"
   },
   "devDependencies": {
-    "@angular/common": "^6.1.4",
-    "@angular/core": "^6.1.4",
-    "@angular/http": "^6.1.4",
-    "@angular/platform-browser": "^6.1.4",
+    "@angular/common": "^8",
+    "@angular/core": "^8",
+    "@angular/platform-browser": "^8",
     "@types/chai": "^3.4.35",
     "@types/mocha": "^2.2.40",
     "@types/sinon": "^1.16.35",
     "chai": "^3.5.0",
     "mocha": "^3.2.0",
     "reflect-metadata": "^0.1.9",
-    "resticle-test-client": "*",
     "resticle": "^1.2.3",
+    "resticle-test-client": "*",
     "rxjs": "6.x.x",
     "sinon": "^1.17.7",
     "ts-node": "^2.1.0",
-    "typescript": "^2.2.x",
+    "typescript": "^3.7.x",
     "zone.js": "^0.8.4"
   }
 }

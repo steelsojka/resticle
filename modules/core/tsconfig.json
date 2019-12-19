@@ -1,20 +1,13 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "es5",
-        "noImplicitAny": false,
-        "sourceMap": true,
-        "experimentalDecorators": true,
-        "moduleResolution": "node",
-        "lib": [
-            "dom.iterable",
-            "es2015",
-            "scripthost",
-            "dom"
-        ]
-    },
-    "include": [
-        "src/**/*",
-        "test/**/*.spec.ts"
-    ]
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "lib": ["dom.iterable", "es2015", "scripthost", "dom"]
+  },
+  "include": ["src/**/*", "test/**/*.spec.ts"]
 }
+

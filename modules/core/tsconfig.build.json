@@ -1,14 +1,12 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "outDir": "./build" ,
-        "declaration": true,
-        "declarationDir": "./build",
-        "types": [
-            "reflect-metadata"
-        ]
-    },
-    "include": [
-        "src/**/*"
-    ]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "outDir": "./build",
+    "declaration": true,
+    "declarationDir": "./build",
+    "types": ["reflect-metadata"]
+  },
+  "include": ["src/**/*"]
 }
+

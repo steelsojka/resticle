@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 import { ResourceFactory } from 'resticle';
 
 import { HttpResourceClient } from './HttpResourceClient';
@@ -9,7 +9,7 @@ import { HTTP_RESOURCE_CLIENT } from './common';
 
 @NgModule({
   imports: [
-    HttpModule  
+    HttpClientModule 
   ],
   providers: [
     HttpResourceClient,
