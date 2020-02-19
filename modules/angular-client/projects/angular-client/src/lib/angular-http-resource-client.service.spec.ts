@@ -1,32 +1,46 @@
+import { TestBed } from '@angular/core/testing';
 import { expect, assert } from 'chai';
 import { spy } from 'sinon';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { ResponseContentType, RequestMethod } from 'resticle';
-import { HttpParams, HttpRequest } from '@angular/common/http';
+import { HttpParams, HttpRequest, HttpClient } from '@angular/common/http';
 
-import { HttpResourceClient } from './HttpResourceClient';
 import {
   HttpRequestInterceptor,
   HttpRequestErrorInterceptor,
   HttpResponseInterceptor,
   HttpResponseErrorInterceptor,
-  HttpResponseTransform
+  HttpResponseTransform,
+  HTTP_TRANSFORMS,
+  HTTP_INTERCEPTORS,
+  HttpInterceptor,
+  HttpTransform
 } from './common';
+import { AngularHttpResourceClient } from './angular-http-resource-client.service';
 
-describe('HttpResourceClient', () => {
-  let stubs, res;
-  let client: HttpResourceClient;
+describe('AngularHttpResourceClient', () => {
+  let res;
+  let client: AngularHttpResourceClient;
+  let interceptors: HttpInterceptor[];
+  let transforms: HttpTransform[];
+  let http: any;
 
   beforeEach(() => {
     res = {};
-    stubs = {
-      http: {
-        request: () => of(res)
-      },
-      ngZone: {
-        runGuarded: spy(fn => fn())
-      }
+    http = {
+      request: () => of(res)
     };
+    interceptors = [];
+    transforms = [];
+
+    TestBed.configureTestingModule({
+      providers: [
+        AngularHttpResourceClient,
+        { provide: HttpClient, useFactory: () => http },
+        { provide: HTTP_INTERCEPTORS, useFactory: () => interceptors },
+        { provide: HTTP_TRANSFORMS, useFactory: () => transforms }
+      ]
+    });
   });
 
   for (const method of ['post', 'get', 'put', 'delete']) {
@@ -50,8 +64,8 @@ describe('HttpResourceClient', () => {
             responseType: ResponseContentType.BLOB
           };
 
-          requestSpy = stubs.http.request = spy(stubs.http.request);
-          client = new HttpResourceClient(stubs.http, [], []);
+          requestSpy = http.request = spy(http.request);
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should return the result', () => {
@@ -98,9 +112,10 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           const interceptor = new RequestInterceptor();
 
-          requestSpy = stubs.http.request = spy(stubs.http.request);
+          requestSpy = http.request = spy(http.request);
           interceptorSpy = spy(interceptor, 'request');
-          client = new HttpResourceClient(stubs.http, [interceptor], []);
+          interceptors = [interceptor];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should invoke the interceptor', () => {
@@ -135,9 +150,10 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           const interceptor = new RequestInterceptor();
 
-          requestSpy = stubs.http.request = spy(stubs.http.request);
+          requestSpy = http.request = spy(http.request);
           interceptorSpy = spy(interceptor, 'requestError');
-          client = new HttpResourceClient(stubs.http, [interceptor], []);
+          interceptors = [interceptor];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should invoke the interceptor', () => {
@@ -165,9 +181,10 @@ describe('HttpResourceClient', () => {
           const interceptor = new ResponseInterceptor();
           data = {};
 
-          requestSpy = stubs.http.request = spy(stubs.http.request);
+          requestSpy = http.request = spy(http.request);
           interceptorSpy = spy(interceptor, 'response');
-          client = new HttpResourceClient(stubs.http, [interceptor], null);
+          interceptors = [interceptor];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should invoke the interceptor', () => {
@@ -193,7 +210,8 @@ describe('HttpResourceClient', () => {
 
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
-          client = new HttpResourceClient(stubs.http, [interceptor], null);
+          interceptors = [interceptor];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should fail the request', () => {
@@ -223,11 +241,12 @@ describe('HttpResourceClient', () => {
           data = {};
           res = data;
 
-          requestSpy = stubs.http.request = spy(() =>
-            Observable.throw(new Error())
+          requestSpy = http.request = spy(() =>
+            throwError(new Error())
           );
           interceptorSpy = spy(interceptor, 'responseError');
-          client = new HttpResourceClient(stubs.http, [interceptor], null);
+          interceptors = [interceptor];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should invoke the interceptor', () => {
@@ -268,10 +287,11 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           interceptor = new ResponseInterceptor();
 
-          requestSpy = stubs.http.request = spy(() =>
-            Observable.throw(new Error())
+          requestSpy = http.request = spy(() =>
+            throwError(new Error())
           );
-          client = new HttpResourceClient(stubs.http, [interceptor], null);
+          interceptors = [interceptor];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should fail the request', () => {
@@ -299,8 +319,8 @@ describe('HttpResourceClient', () => {
         beforeEach(() => {
           transformed = {};
           transform = new ResponseTransformer();
-
-          client = new HttpResourceClient(stubs.http, [], [transform]);
+          transforms = [transform];
+          client = TestBed.inject(AngularHttpResourceClient);
         });
 
         it('should transform the response', () => {

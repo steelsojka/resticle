@@ -4,24 +4,18 @@ import { ResourceFetchClient } from 'resticle';
 
 /**
  * Token for registering interceptors.
- * @export
- * @type {OpaqueToken}
  */
 export const HTTP_INTERCEPTORS = new InjectionToken<HttpInterceptor>(
   'HttpInterceptors'
 );
 /**
  * Token for registering interceptors.
- * @export
- * @type {OpaqueToken}
  */
 export const HTTP_TRANSFORMS = new InjectionToken<HttpTransform>(
   'HttpTransforms'
 );
 /**
  * Token used for registering the http client to use for the resource factory.
- * @export
- * @type {OpaqueToken}
  */
 export const HTTP_RESOURCE_CLIENT = new InjectionToken<ResourceFetchClient>(
   'HttpResourceClient'
@@ -29,9 +23,6 @@ export const HTTP_RESOURCE_CLIENT = new InjectionToken<ResourceFetchClient>(
 
 /**
  * A request interceptor.
- * @export
- * @interface HttpRequestInterceptor
- * @template T
  */
 export interface HttpRequestInterceptor {
   request(
@@ -41,9 +32,6 @@ export interface HttpRequestInterceptor {
 
 /**
  * A request error interceptor.
- * @export
- * @interface HttpRequestInterceptor
- * @template T
  */
 export interface HttpRequestErrorInterceptor {
   requestError(
@@ -54,9 +42,6 @@ export interface HttpRequestErrorInterceptor {
 
 /**
  * A response interceptor.
- * @export
- * @interface HttpResponseInterceptor
- * @template T The data type.
  */
 export interface HttpResponseInterceptor {
   response(data: any, res: HttpResponse<any>): any | Promise<any>;
@@ -64,9 +49,6 @@ export interface HttpResponseInterceptor {
 
 /**
  * A response interceptor.
- * @export
- * @interface HttpResponseInterceptor
- * @template T
  */
 export interface HttpResponseErrorInterceptor {
   responseError(
@@ -77,10 +59,6 @@ export interface HttpResponseErrorInterceptor {
 
 /**
  * A response transformer.
- * @export
- * @interface HttpResponseTransform
- * @template T The entering data type.
- * @template U The transformed data type.
  */
 export interface HttpResponseTransform<T, U> {
   response(data: T): U;
@@ -88,8 +66,6 @@ export interface HttpResponseTransform<T, U> {
 
 /**
  * A request transformer.
- * @export
- * @interface HttpRequestTransform
  */
 export interface HttpRequestTransform {
   request(args: Partial<HttpRequest<any>>): Partial<HttpRequest<any>>;

@@ -1,0 +1,14 @@
+{
+  "name": "resticle-angular-client",
+  "version": "6.0.0",
+  "description": "An Angular client for resticle",
+  "author": "Steven Sojka",
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/common": "^9.0.1",
+    "@angular/core": "^9.0.1",
+    "tslib": "^1.10.0",
+    "resticle": "^1.2.4",
+    "rxjs": "^6.5.0"
+  }
+}

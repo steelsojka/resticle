@@ -26,21 +26,24 @@ import { isFunction } from './utils';
 /**
  * A Resticle client using Angulars HTTP service. Adds support for request and response
  * interceptors.
- * @export
- * @class HttpResourceClient
- * @implements {ResourceFetchClient}
  */
 @Injectable()
-export class HttpResourceClient implements ResourceFetchClient {
+export class AngularHttpResourceClient implements ResourceFetchClient {
+  private _interceptors!: HttpInterceptor[];
+  private _transforms!: HttpTransform[];
+
   constructor(
     @Inject(HttpClient) private http: HttpClient,
     @Inject(HTTP_INTERCEPTORS)
     @Optional()
-    private _interceptors: HttpInterceptor[] | null,
+    _interceptors: HttpInterceptor[] | null,
     @Inject(HTTP_TRANSFORMS)
     @Optional()
-    private _transforms: HttpTransform[] | null
-  ) {}
+    _transforms: HttpTransform[] | null
+  ) {
+    this._interceptors = _interceptors ?? [];
+    this._transforms = _transforms ?? [];
+  }
 
   get<T>(req: ResourceRequest<T>): Observable<T> {
     return this.request(req);
@@ -71,10 +74,6 @@ export class HttpResourceClient implements ResourceFetchClient {
 
   /**
    * Performs an Angular HTTP request and invokes interceptors.
-   * @protected
-   * @template T The return type.
-   * @param {ResourceRequest<T>} req
-   * @returns {Observable<T>}
    */
   protected request<T>(req: ResourceRequest<T>): Observable<T> {
     return of(this.convertRequest(req)).pipe(
@@ -85,7 +84,7 @@ export class HttpResourceClient implements ResourceFetchClient {
           ['request', 'requestError']
         ),
       map(req => this._runTransformers<HttpRequest<T>>(req, 'request')),
-      mergeMap<HttpRequest<T>, HttpResponse<T>>(req =>
+      mergeMap<HttpRequest<T>, Observable<HttpResponse<T>>>(req =>
         this.http.request(req.method, req.url, req)
       ),
       source =>
@@ -99,16 +98,10 @@ export class HttpResourceClient implements ResourceFetchClient {
 
   /**
    * Executes an interceptor.
-   * @protected
-   * @param {HttpInterceptors|null} interceptors
-   * @param {*} value
-   * @param {string} name
-   * @param {...any[]} args
-   * @returns {Observable<any>}
    */
   protected executeInterceptor<T>(
     $chain: Observable<T>,
-    interceptors: HttpInterceptor[] | null,
+    interceptors: HttpInterceptor[],
     [thenFn, errorFn]: [string, string],
     ...args: any[]
   ): Observable<T> {
@@ -135,10 +128,6 @@ export class HttpResourceClient implements ResourceFetchClient {
 
   /**
    * Maps a Resticle request to an Angular HTTP request.
-   * @protected
-   * @template T
-   * @param {ResourceRequest<T>} req
-   * @returns {RequestOptionsArgs}
    */
   protected convertRequest<T>(
     req: ResourceRequest<T>
@@ -175,9 +164,6 @@ export class HttpResourceClient implements ResourceFetchClient {
 
   /**
    * Maps the request method to an Angular HTTP request method.
-   * @protected
-   * @param {ResticleRequestMethod} method
-   * @returns {RequestMethod}
    */
   protected convertMethod(
     method: ResticleRequestMethod
@@ -196,9 +182,6 @@ export class HttpResourceClient implements ResourceFetchClient {
 
   /**
    * Maps a search object to an Angular Param object.
-   * @protected
-   * @param {{[key: string]: any}} search
-   * @returns {URLSearchParams}
    */
   protected convertParams(search: { [key: string]: any } = {}): HttpParams {
     return Object.keys(search).reduce(
