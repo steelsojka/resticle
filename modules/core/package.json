@@ -37,6 +37,6 @@
     "reflect-metadata": "^0.1.9"
   },
   "dependencies": {
-    "url-parse": "^1.1.7"
+    "url-parse": "^1.5.0"
   }
 }
